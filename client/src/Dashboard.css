@@ -1,0 +1,99 @@
+html,
+body {
+  overflow: hidden;
+}
+
+.dashboard {
+  font-family: "Gill Sans", sans-serif;
+}
+
+.dashboard .profile img {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  height: 80px;
+  width: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.dashboard .profile .name {
+  position: absolute;
+  top: 29px;
+  right: 100px;
+  cursor: default;
+}
+
+.dashboard .first-container {
+  border-style: solid;
+  border-bottom: none;
+  width: 15%;
+  text-align: center;
+}
+
+.dashboard .second-container {
+  border-style: solid;
+  width: 15%;
+}
+
+.dashboard .third-container {
+  border-style: solid;
+  border-top-style: hidden;
+  width: 15%;
+  text-align: center;
+  padding-top: 0.5px;
+}
+
+.dashboard .page-title {
+  position: relative;
+  left: 1%;
+  top: 15px;
+  padding-bottom: 50px;
+  width: 7%;
+}
+
+.dashboard .first-container-text {
+  cursor: pointer;
+  padding: 50px;
+  margin: 0;
+}
+
+.dashboard .second-container-text {
+  cursor: pointer;
+  text-align: center;
+  padding: 54px 0;
+  margin: 0;
+}
+
+.dashboard .third-container-text {
+  padding: 50px 0;
+  cursor: pointer;
+  margin: 0;
+}
+
+.dashboard .container-middle {
+  position: absolute;
+  left: 19%;
+  top: 125px;
+  border-style: solid;
+  width: 75%;
+  height: 741px;
+}
+
+.dashboard .second-container-text:hover {
+  background-color: rgb(161, 161, 161);
+  cursor: pointer;
+}
+
+.dashboard .first-container-text:hover {
+  background-color: rgb(161, 161, 161);
+  cursor: pointer;
+}
+
+.dashboard .third-container-text:hover {
+  background-color: rgb(161, 161, 161);
+  cursor: pointer;
+}
+
+.dashboard .active {
+  background-color: rgb(161, 161, 161);
+}
