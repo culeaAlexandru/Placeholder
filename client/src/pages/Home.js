@@ -56,6 +56,14 @@ const Homepage = () => {
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     setIsLoggedIn(false);
+    axios
+      .get("http://localhost:3002/logout")
+      .then(() => {
+        console.log("User logged out successfully");
+      })
+      .catch((error) => {
+        console.error("Error logging out:", error);
+      });
   };
 
   useEffect(() => {

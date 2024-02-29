@@ -20,6 +20,8 @@
     "express-session": "^1.18.0",
     "http-errors": "^2.0.0",
     "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.3.0",
+    "mongoose": "^8.2.0",
     "mysql": "^2.18.1"
   },
   "devDependencies": {

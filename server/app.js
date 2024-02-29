@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const mysql = require("mysql");
+const { MongoClient } = require("mongodb");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
@@ -27,91 +27,101 @@ app.use(
   })
 );
 
+const uri =
+  "mongodb+srv://ionutalexandruculea:nsnsbahja@placeholder.3rhmcks.mongodb.net/?retryWrites=true&w=majority&appName=Placeholder";
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+const saltRounds = 10;
+
 app.listen(3002, () => {
   console.log("Server is running on port 3002");
 });
 
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "portfolio_login_db",
-});
-const saltRounds = 10;
-app.post("/register", (req, res) => {
+async function connectToMongo() {
+  try {
+    await client.connect();
+    console.log("Connected to MongoDB!");
+  } catch (error) {
+    console.error("Error connecting to MongoDB:", error);
+    if (error.codeName === "AtlasError") {
+      console.error("Atlas Error Details:", error.details);
+    }
+  }
+}
+
+connectToMongo();
+
+app.post("/register", async (req, res) => {
   const sentEmail = req.body.Email;
   const sentUsername = req.body.UserName;
   const setPassword = req.body.Password;
 
-  // Check if the email or username already exists
-  const checkExistenceSQL =
-    "SELECT * FROM users WHERE email = ? OR username = ?";
-  const checkExistenceValues = [sentEmail, sentUsername];
+  try {
+    const existingUser = await client
+      .db("portfolio_login_db")
+      .collection("users")
+      .findOne({
+        $or: [{ email: sentEmail }, { username: sentUsername }],
+      });
 
-  db.query(checkExistenceSQL, checkExistenceValues, (err, results) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-    } else if (results.length > 0) {
-      // User with the same email or username already exists
+    if (existingUser) {
       res.send({ message: "Email or username is already registered" });
     } else {
-      // If the email and username are not already registered, proceed with registration
-      bcrypt.hash(setPassword, saltRounds, (hashErr, hash) => {
-        if (hashErr) {
-          res.send(hashErr);
-        } else {
-          const insertUserSQL =
-            "INSERT INTO users (email, username, password) VALUES (?,?,?)";
-          const insertUserValues = [sentEmail, sentUsername, hash];
+      const hash = await bcrypt.hash(setPassword, saltRounds);
+      const newUser = {
+        email: sentEmail,
+        username: sentUsername,
+        password: hash,
+      };
 
-          db.query(insertUserSQL, insertUserValues, (insertErr, results) => {
-            if (insertErr) {
-              res.send(insertErr);
-            } else {
-              console.log("User inserted successfully");
-              res.send({ message: "User added!" });
-            }
-          });
-        }
-      });
+      await client
+        .db("portfolio_login_db")
+        .collection("users")
+        .insertOne(newUser);
+      console.log("User inserted successfully");
+      res.send({ message: "User added!" });
     }
-  });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
   const sentLoginUsername = req.body.LoginUserName;
   const setLoginPassword = req.body.LoginPassword;
 
-  const selectUserSQL = "SELECT * FROM users WHERE username = ?";
-  const selectUserValues = [sentLoginUsername];
+  try {
+    const user = await client
+      .db("portfolio_login_db")
+      .collection("users")
+      .findOne({ username: sentLoginUsername });
 
-  db.query(selectUserSQL, selectUserValues, (err, results) => {
-    if (err) {
-      res.status(500).send({ error: err });
-    } else if (results.length > 0) {
-      const hashedPassword = results[0].password;
-      req.session.LoginUserName = results[0].username;
-      console.log(req.session.LoginUserName);
+    if (user) {
+      const match = await bcrypt.compare(setLoginPassword, user.password);
 
-      bcrypt.compare(setLoginPassword, hashedPassword, (compareErr, match) => {
-        if (compareErr) {
-          res.status(500).send({ error: compareErr });
-        } else if (match) {
-          res.send({
-            results,
-            username: results[0].username,
-            isLoggedIn: true,
-          });
-        } else {
-          res
-            .status(401)
-            .send({ message: "Credentials error", isLoggedIn: false });
-        }
-      });
+      if (match) {
+        req.session.LoginUserName = user.username;
+        console.log(req.session.LoginUserName);
+
+        res.send({
+          results: user,
+          username: user.username,
+          isLoggedIn: true,
+        });
+      } else {
+        res
+          .status(401)
+          .send({ message: "Credentials error", isLoggedIn: false });
+      }
     } else {
       res.status(401).send({ message: "Credentials error", isLoggedIn: false });
     }
-  });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get("/", (req, res) => {
@@ -120,4 +130,16 @@ app.get("/", (req, res) => {
   } else {
     res.send({ valid: false });
   }
+});
+
+app.get("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Error destroying session:", err);
+      res.status(500).send("Error logging out");
+    } else {
+      res.clearCookie("connect.sid");
+      res.send("Logged out successfully");
+    }
+  });
 });
