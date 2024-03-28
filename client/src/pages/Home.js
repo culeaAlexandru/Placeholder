@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import * as d3 from "d3";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../Home-page.css";
 import "../Home-page-loggedIn.css";
 import portrait from "../imgs/default-pp.jpg";
@@ -19,7 +19,7 @@ const initialData = [
   initializeData("d4", "Asset 4"),
 ];
 
-const Homepage = () => {
+export default function Homepage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [selectedData, setSelectedData] = useState([]);
@@ -36,9 +36,10 @@ const Homepage = () => {
   useEffect(() => {
     axios.get("http://localhost:3002").then((res) => {
       if (res.data.valid) {
-        localStorage.setItem("isLoggedIn", "true");
         setIsLoggedIn(true);
         setUsername(res.data.username);
+      } else {
+        setIsLoggedIn(false);
       }
     });
   }, []);
@@ -163,6 +164,7 @@ const Homepage = () => {
     setSliderValue(value);
     showValue();
     setIsSliderInteracted(true);
+    sessionStorage.setItem("riskValue", value);
   };
 
   const handleSliderMouseDown = () => {
@@ -213,6 +215,43 @@ const Homepage = () => {
       document.removeEventListener("mousedown", handler);
     };
   }, [menuRef]);
+
+  const navigate = useNavigate();
+
+  const handleContinue = async (e) => {
+    e.preventDefault();
+    console.log("Called");
+
+    console.log("Saving risk value for user:", username);
+    console.log("Risk value:", sliderValue);
+
+    if (!isLoggedIn) {
+      sessionStorage.setItem("riskValue", sliderValue);
+      navigate("/login");
+    } else {
+      try {
+        const response = await axios.post("http://localhost:3002/save-risk", {
+          username: username,
+          riskValue: sliderValue,
+        });
+
+        if (response.status === 200) {
+          console.log("Risk value saved successfully");
+          navigate("/dashboard/invest");
+        }
+      } catch (error) {
+        console.error("Error saving risk value:", error.message);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const riskValue = sessionStorage.getItem("riskValue");
+    if (riskValue) {
+      setSliderValue(parseInt(riskValue, 10));
+      sessionStorage.removeItem("riskValue");
+    }
+  }, []);
 
   return (
     <div className={isLoggedIn ? "home-page-logged" : "home-page"}>
@@ -313,18 +352,9 @@ const Homepage = () => {
               : `The risk selected is: ${sliderValue}`
             : ""}
         </p>
-        <Link
-          to={
-            sliderValue === 0
-              ? isLoggedIn
-                ? "/loggedin"
-                : "/"
-              : "/dashboard/invest"
-          }
-          className="custom-link"
-        >
+        <form onSubmit={handleContinue}>
           <button className="continue-button">Continue</button>
-        </Link>
+        </form>
       </div>
 
       {/* Common Chart */}
@@ -350,6 +380,4 @@ const Homepage = () => {
       </div>
     </div>
   );
-};
-
-export default Homepage;
+}

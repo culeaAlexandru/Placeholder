@@ -1,34 +1,59 @@
 import React, { useEffect, useState } from "react";
-import Axios from "axios";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../Login.css";
 
-const Login = () => {
+export default function Login() {
   const [loginUserName, setLoginUserName] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const navigateTo = useNavigate();
+  const navigate = useNavigate();
 
   const [loginStatus, setLoginStatus] = useState("");
   const [statusHolder, setstatusHolder] = useState("message");
 
+  const [isLoggedIn, setIsLoggedIn] = useState();
+
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const response = await fetch("http://localhost:3002/", {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+        setIsLoggedIn(data.valid);
+      } catch (error) {
+        console.error("Error checking login status:", error);
+      }
+    };
+    checkLoginStatus();
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn === true) {
+      navigate("/");
+    }
+  }, [isLoggedIn, navigate]);
+
   const loginUser = (event) => {
     event.preventDefault();
-    Axios.post("http://localhost:3002/login", {
-      LoginUserName: loginUserName,
-      LoginPassword: loginPassword,
-    }).then((response) => {
-      if (
-        response.data.message ||
-        loginUserName === "" ||
-        loginPassword === ""
-      ) {
-        setLoginStatus("Credentials error");
-      } else {
-        localStorage.setItem("isLoggedIn", "true");
-        navigateTo("/");
-      }
-    });
+    axios
+      .post("http://localhost:3002/login", {
+        LoginUserName: loginUserName,
+        LoginPassword: loginPassword,
+      })
+      .then((response) => {
+        if (
+          response.data.message ||
+          loginUserName === "" ||
+          loginPassword === ""
+        ) {
+          setLoginStatus("Credentials error");
+        } else {
+          localStorage.setItem("isLoggedIn", "true");
+          navigate("/");
+        }
+      });
   };
 
   useEffect(() => {
@@ -99,6 +124,4 @@ const Login = () => {
       </div>
     </div>
   );
-};
-
-export default Login;
+}

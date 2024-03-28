@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Loggedin from "./pages/Loggedin";
 import Dashboard from "./pages/Dashboard";
 import Invest from "./pages/Invest";
 import Portfolios from "./pages/Portfolios";
@@ -19,7 +18,6 @@ export default function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/loggedin" element={<Loggedin />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/invest" element={<Invest />} />
           <Route path="/dashboard/portfolios" element={<Portfolios />} />

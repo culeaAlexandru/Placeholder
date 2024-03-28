@@ -3,7 +3,7 @@ import Axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../Register.css";
 
-const RegisterForm = () => {
+export default function Register() {
   const [email, setEmail] = useState("");
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
@@ -14,6 +14,16 @@ const RegisterForm = () => {
   const creatUser = (event) => {
     event.preventDefault();
 
+    if (email.includes(" ")) {
+      setErrorMessage("The email cannot contain spaces");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setErrorMessage("Please enter a valid email");
+      return;
+    }
+
     if (!email.includes("@") || email.length < 5) {
       setErrorMessage("Please enter a valid email");
       return;
@@ -21,6 +31,11 @@ const RegisterForm = () => {
 
     if (userName.trim() === "") {
       setErrorMessage("Please insert a username");
+      return;
+    }
+
+    if (userName.includes(" ")) {
+      setErrorMessage("The username cannot contain spaces");
       return;
     }
 
@@ -137,6 +152,4 @@ const RegisterForm = () => {
       </div>
     </div>
   );
-};
-
-export default RegisterForm;
+}

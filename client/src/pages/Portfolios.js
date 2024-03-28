@@ -1,167 +1,113 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import portrait from "../imgs/default-pp.jpg";
+import axios from "axios";
 import "../Dashboard.css";
-import { Link } from "react-router-dom";
-import * as d3 from "d3";
-
-const initializeData = (id, region) => ({
-  id,
-  region,
-  value: Array.from({ length: 7 }, () => Math.floor(Math.random() * 21)),
-});
-
-// Initial data array
-const initialData = [
-  initializeData("d1", "Asset 1"),
-  initializeData("d2", "Asset 2"),
-  initializeData("d3", "Asset 3"),
-  initializeData("d4", "Asset 4"),
-];
+import { Link, useNavigate } from "react-router-dom";
 
 export default function DashboardPortfolios() {
+  const [isLoggedIn, setIsLoggedIn] = useState();
   const [modal, setModal] = useState(false);
+  const [username, setUsername] = useState("");
+  const [portfolioData, setPortfolioData] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const response = await axios.get("http://localhost:3002", {
+          withCredentials: true,
+        });
+        const { valid, username } = response.data;
+        setIsLoggedIn(valid);
+        setUsername(username);
+      } catch (error) {
+        console.error("Error checking login status:", error);
+      }
+    };
+
+    checkLoginStatus();
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn === false) {
+      navigate("/login");
+    }
+  }, [isLoggedIn, navigate]);
+
+  useEffect(() => {
+    if (username.length > 0) {
+      const fetchPortfolioData = async () => {
+        try {
+          const response = await axios.post(
+            "http://localhost:3002/get-portfolio-data",
+            {
+              username: username,
+            }
+          );
+          if (response.status === 200) {
+            setPortfolioData(response.data.portfolioData);
+          }
+        } catch (error) {
+          console.error("Error fetching portfolio data:", error);
+        }
+      };
+      fetchPortfolioData();
+    }
+  }, [username]);
 
   const toggleModal = () => {
     setModal(!modal);
   };
 
-  if (modal) {
-    document.body.classList.add("active-modal");
-  } else {
-    document.body.classList.remove("active-modal");
-  }
-  // State for checkbox and selected data
-  const [isChecked, setIsChecked] = useState(false);
-  const [selectedData, setSelectedData] = useState([]);
-
-  // Reference to the chart container element
-  const chartContainerRef = useRef(null);
-
-  // Effect to handle changes in checkbox state and selected data
   useEffect(() => {
-    if (isChecked) {
-      console.log(selectedData);
-
-      // Function to create and update the chart
-      const chart = () => {
-        const width = 950;
-        const height = 500;
-        const marginTop = 100;
-        const marginRight = 0;
-        const marginBottom = 30;
-        const marginLeft = 40;
-
-        const tickValues = Array.from({ length: 7 }, (_, i) => i + 1);
-
-        // X and Y scales
-        const x = d3
-          .scaleBand()
-          .domain(tickValues)
-          .range([marginLeft - 50, width - marginRight + 120])
-          .padding(1);
-
-        const y = d3
-          .scaleLinear()
-          .domain([0, 20])
-          .range([height - marginBottom, marginTop]);
-
-        // SVG container for the chart
-        const svg = d3
-          .select(chartContainerRef.current)
-          .attr("width", width)
-          .attr("height", height)
-          .attr("viewBox", [0, 0, width, height])
-          .attr("style", "max-width: 100%; height: auto;");
-
-        // Remove any existing elements within the SVG
-        svg.selectAll("*").remove();
-
-        // X-axis
-        svg
-          .append("g")
-          .attr("transform", `translate(0,${height - marginBottom})`)
-          .call(
-            d3.axisBottom(x).tickValues(tickValues).tickFormat(d3.format("d"))
-          )
-          .call((g) => g.select(".domain").remove());
-
-        // Y-axis
-        svg
-          .append("g")
-          .attr("transform", `translate(${marginLeft},0)`)
-          .call(
-            d3
-              .axisRight(y)
-              .tickSize(width - marginLeft - marginRight)
-              .ticks(11)
-          )
-          .call((g) => g.select(".domain").remove())
-          .call((g) =>
-            g
-              .selectAll(".tick:not(:first-of-type) line")
-              .attr("stroke-opacity", 0.5)
-              .attr("stroke-dasharray", "2,2")
-          )
-          .call((g) => g.selectAll(".tick text").attr("x", 4).attr("dy", -4));
-
-        // Line chart
-        svg
-          .append("path")
-          .datum(selectedData)
-          .attr("fill", "none")
-          .attr("stroke", "steelblue")
-          .attr("stroke-width", 1.5)
-          .attr(
-            "d",
-            d3
-              .line()
-              .x((d, i) => x(i + 1))
-              .y((d) => y(d))
-          );
-      };
-
-      // Call the chart function
-      chart();
+    if (modal) {
+      document.body.classList.add("active-modal");
+    } else {
+      document.body.classList.remove("active-modal");
     }
-  }, [isChecked, selectedData]);
+  }, [modal]);
 
-  // Function to handle checkbox change
-  const handleCheckboxChange = (data) => {
-    const selectedValue = initialData.find((d) => d.id === data.id).value;
-    setSelectedData(selectedValue);
-    setIsChecked(true);
+  const handleLogout = async () => {
+    try {
+      await axios.get("http://localhost:3002/logout", {
+        withCredentials: true,
+      });
+      localStorage.removeItem("isLoggedIn");
+      setIsLoggedIn(false);
+      console.log("User logged out successfully");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   return (
     <div className="dashboard">
       <div className="page-title">
-        <Link to="/loggedin" className="custom-link">
+        <Link to="/" className="custom-link">
           <h2>Placeholder</h2>
         </Link>
       </div>
       <div className="container-middle">
-        <div id="chart">
-          {/* SVG container for the chart */}
-          <svg ref={chartContainerRef}></svg>
-        </div>
-        <div id="data">
-          {/* List of regions with checkboxes */}
-          <ul>
-            {initialData.map((data) => (
-              <li key={data.id}>
-                <span>{data.region}</span>
-                <input
-                  type="checkbox"
-                  checked={isChecked && selectedData === data.value}
-                  onChange={() => handleCheckboxChange(data)}
-                />
-              </li>
-            ))}
-          </ul>
+        <div className="portfolio-data">
+          {portfolioData.map((portfolio, innerIndex) => (
+            <div key={innerIndex}>
+              <p>Portfolio {innerIndex + 1}</p>
+              <p>Balance Input: {portfolio.balanceInput}</p>
+              <p>Risk Input A: {portfolio.riskInputA}</p>
+              {portfolio.assets === 2 && (
+                <p>Risk Input B: {portfolio.riskInputB}</p>
+              )}
+              <p>First Asset: {portfolio.firstAsset}</p>
+              {portfolio.assets === 2 && (
+                <p>Second Asset: {portfolio.firstAsset}</p>
+              )}
+              <p>Balance Result: {portfolio.balanceResult}</p>
+            </div>
+          ))}
         </div>
       </div>
       <div className="profile">
-        <h4 className="name">Alexandru Culea</h4>
+        <div className="username">{username}</div>
         <img src={portrait} alt=" "></img>
       </div>
       <div className="containers-left">
@@ -182,7 +128,7 @@ export default function DashboardPortfolios() {
               className="second-container-text"
               style={{ backgroundColor: "rgb(161, 161, 161)" }}
             >
-              Porfolios
+              Portfolios
             </h4>
           </Link>
         </div>
@@ -201,7 +147,9 @@ export default function DashboardPortfolios() {
               <div className="modal-content">
                 <h2>Are you sure you want to log out?</h2>
                 <Link to="/" className="custom-link">
-                  <button className="modal-yes-btn">Yes</button>
+                  <button className="modal-yes-btn" onClick={handleLogout}>
+                    Yes
+                  </button>
                 </Link>
                 <button className="modal-no-btn" onClick={toggleModal}>
                   No

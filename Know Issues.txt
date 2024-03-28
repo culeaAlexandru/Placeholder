@@ -1,0 +1,9 @@
+1. The search asset searches if the name has at least one element in the name and gives it
+2. The rezolution of the pages are not flexible(eg. The elements in the Home-page are visible only on 1920x1080)
+3. If no asset/s is/are searched, after triggering the submit button, the page gets an error and the balance return is NaN
+4. You have to restart the Watchlist page to see your Saved Assets
+5. In  the VS Code, a warning is present for the Watchlist page.
+6. After editing some of the information in Profile, if you already had information and you did not edit it, the information will be shown twice.
+7. If you search for an asset already saved in the data-base, it will get an error in Watchlist page
+
+
