@@ -19,12 +19,11 @@ export default function DashboardWatchlist() {
   });
   const [searchResult, setSearchResult] = useState(null);
   const [savedAssets, setSavedAssets] = useState([]);
+  const [warning, setWarning] = useState("");
   const fromDate = "2023-03-23";
   const toDate = "2024-03-23";
   const apiKey = "SbUhzMlpiU94dp9UtJGKlPs59R6DBpGi";
-  const [apiUrl, setApiUrl] = useState(
-    `https://financialmodelingprep.com/api/v3/historical-chart/4hour/${assetSymbol}?from=${fromDate}&to=${toDate}&apikey=${apiKey}`
-  );
+  const searchApiUrl = `https://financialmodelingprep.com/api/v3/stock/list?apikey=${apiKey}`;
 
   useEffect(() => {
     const checkLoginStatus = async () => {
@@ -74,8 +73,6 @@ export default function DashboardWatchlist() {
     }
   };
 
-  const searchApiUrl = `https://financialmodelingprep.com/api/v3/stock/list?apikey=${apiKey}`;
-
   useEffect(() => {
     if (!searchState.hasSearched || !searchState.companyName) return;
 
@@ -106,6 +103,9 @@ export default function DashboardWatchlist() {
           ...searchState,
           hasSearched: false,
         });
+        if (foundItem) {
+          updateChartData(foundItem.symbol);
+        }
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -113,36 +113,22 @@ export default function DashboardWatchlist() {
       });
   }, [searchApiUrl, searchState]);
 
-  const handleSearch = () => {
-    setSearchState({
-      ...searchState,
-      hasSearched: true,
-    });
-  };
+  const updateChartData = (symbol) => {
+    const newApiUrl = `https://financialmodelingprep.com/api/v3/historical-chart/4hour/${symbol}?from=${fromDate}&to=${toDate}&apikey=${apiKey}`;
 
-  useEffect(() => {
-    if (apiUrl) {
-      fetch(apiUrl)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          console.log("Raw data: ", data);
-          const filteredData = data.filter((item) => {
-            const date = new Date(item.date);
-            return !isNaN(date);
-          });
-          setData(filteredData);
-          console.log(filteredData);
-        })
-        .catch((error) => {
-          console.error("Error:", error);
+    fetch(newApiUrl)
+      .then((response) => response.json())
+      .then((data) => {
+        const filteredData = data.filter((item) => {
+          const date = new Date(item.date);
+          return date;
         });
-    }
-  }, [apiUrl]);
+        setData(filteredData);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  };
 
   useEffect(() => {
     if (data) {
@@ -215,6 +201,11 @@ export default function DashboardWatchlist() {
       .then((response) => {
         if (response.status === 200) {
           alert("Asset saved successfully!");
+          setSavedAssets((prevSavedAssets) => [
+            ...prevSavedAssets,
+            assetSymbol,
+          ]);
+          setWarning("");
         } else if (response.status === 400) {
           alert("Asset is already saved.");
         } else {
@@ -228,7 +219,9 @@ export default function DashboardWatchlist() {
   };
 
   useEffect(() => {
-    if (username.length > 0) {
+    if (username.length > 0 && savedAssets === 0) {
+      setWarning("No assets were saved");
+    } else if (username.length > 0 && warning === "") {
       axios
         .get(`http://localhost:3002/saved-assets/${username}`)
         .then((response) => {
@@ -238,34 +231,24 @@ export default function DashboardWatchlist() {
           console.error("Error fetching saved assets:", error);
         });
     }
-  }, [username]);
+  }, [username, savedAssets, warning]);
+
+  const handleSearch = () => {
+    setSearchState({
+      ...searchState,
+      hasSearched: true,
+    });
+  };
 
   const handleAssetButtonClick = (assetSymbol) => {
     console.log("Button clicked for asset:", assetSymbol);
     setAssetSymbol(assetSymbol);
-
-    const newApiUrl = `https://financialmodelingprep.com/api/v3/historical-chart/4hour/${assetSymbol}?from=${fromDate}&to=${toDate}&apikey=${apiKey}`;
-    setApiUrl(newApiUrl);
-
-    fetch(newApiUrl)
-      .then((response) => response.json())
-      .then((data) => {
-        const filteredData = data.filter((item) => {
-          const date = new Date(item.date);
-          return date;
-        });
-        setData(filteredData);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
+    updateChartData(assetSymbol);
   };
 
   const handleSearchResultClick = (symbol) => {
     setAssetSymbol(symbol);
-    setApiUrl(
-      `https://financialmodelingprep.com/api/v3/historical-chart/4hour/${symbol}?from=${fromDate}&to=${toDate}&apikey=${apiKey}`
-    );
+    updateChartData(symbol);
   };
 
   return (
@@ -308,9 +291,6 @@ export default function DashboardWatchlist() {
             <p>No matching company found.</p>
           )}
           <button onClick={handleSaveAsset}>Save Asset</button>
-          <button onClick={() => handleAssetButtonClick(assetSymbol)}>
-            Update Chart
-          </button>
           <div>
             <h2>Saved Assets:</h2>
             {savedAssets.length > 0 ? (
@@ -324,7 +304,7 @@ export default function DashboardWatchlist() {
                 ))}
               </ul>
             ) : (
-              <p>No saved assets found.</p>
+              <p>{warning}</p>
             )}
           </div>
           <canvas id="myChart"></canvas>

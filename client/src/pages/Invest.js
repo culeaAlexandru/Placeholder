@@ -37,7 +37,15 @@ export default function DashboardInvest() {
     useState("");
   const [savedPortfolioBalanceReturnB, setSavedPortfolioBalanceReturnB] =
     useState("");
-  const [showSearchInput, setShowSearchInput] = useState(false);
+  const [searchWarningA, setSearchWarningA] = useState(
+    "Please search for an asset"
+  );
+  const [searchWarningB, setSearchWarningB] = useState(
+    "Please search for an asset"
+  );
+
+  const apiKey = "SbUhzMlpiU94dp9UtJGKlPs59R6DBpGi";
+  const searchApiUrl = `https://financialmodelingprep.com/api/v3/stock/list?apikey=${apiKey}`;
 
   useEffect(() => {
     const checkLoginStatus = async () => {
@@ -74,9 +82,6 @@ export default function DashboardInvest() {
     }
   }, [modal]);
 
-  const apiKey = "SbUhzMlpiU94dp9UtJGKlPs59R6DBpGi";
-  const searchApiUrl = `https://financialmodelingprep.com/api/v3/stock/list?apikey=${apiKey}`;
-
   useEffect(() => {
     if (!searchStateA.hasSearched || !searchStateA.companyName) return;
 
@@ -91,6 +96,7 @@ export default function DashboardInvest() {
         if (!data) {
           console.error("Error: Data is null");
           setSearchResultA(null);
+          setSearchWarningB("No matching company found.");
           return;
         }
 
@@ -107,6 +113,7 @@ export default function DashboardInvest() {
           ...searchStateA,
           hasSearched: false,
         });
+        setSearchWarningA("");
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -128,6 +135,7 @@ export default function DashboardInvest() {
         if (!data) {
           console.error("Error: Data is null");
           setSearchResultA(null);
+          setSearchWarningB("No matching company found.");
           return;
         }
 
@@ -144,6 +152,7 @@ export default function DashboardInvest() {
           ...searchStateB,
           hasSearched: false,
         });
+        setSearchWarningB("");
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -156,7 +165,6 @@ export default function DashboardInvest() {
       ...searchStateA,
       hasSearched: true,
     });
-    setShowSearchInput(true);
   };
 
   const handleSearchB = () => {
@@ -164,7 +172,6 @@ export default function DashboardInvest() {
       ...searchStateB,
       hasSearched: true,
     });
-    setShowSearchInput(true);
   };
 
   const handleButtonAssetsClick = (buttonNumber) => {
@@ -668,9 +675,9 @@ export default function DashboardInvest() {
                 </ul>
               </div>
             ) : (
-              <p>No matching company found.</p>
+              <p>{searchWarningA}</p>
             )}
-            {showSearchInput && (
+            {searchWarningA === "" && (
               <div>
                 <div className="balance-value">{`Your Balance: ${balanceInput}`}</div>
                 <div className="balance-warning">{balanceWarning}</div>
@@ -734,7 +741,7 @@ export default function DashboardInvest() {
                 </ul>
               </div>
             ) : (
-              <p>No matching company found.</p>
+              <p>{searchWarningA}</p>
             )}
             <input
               type="text"
@@ -761,41 +768,48 @@ export default function DashboardInvest() {
                 </ul>
               </div>
             ) : (
-              <p>No matching company found.</p>
+              <p>{searchWarningB}</p>
             )}
-            <div className="balance-value">{`Your Balance: ${balanceInput}`}</div>
-            <div className="balance-warning">{balanceWarning}</div>
-            <div className="risk-value">{`Your first Risk: ${riskValueA}`}</div>
-            <div className="risk-value">{`Your second Risk: ${riskValueB}`}</div>
-            <div className="risk-warning">{riskWarning}</div>
-            <input
-              type="input"
-              placeholder="Balance for Asset A"
-              value={balanceInput}
-              onChange={(e) => setBalanceInput(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Risk for Asset B"
-              value={riskValueA}
-              onChange={(e) => setRiskValueA(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Risk for Asset B"
-              value={riskValueB}
-              onChange={(e) => setRiskValueB(e.target.value)}
-            />
-            <button className="submit-button" onClick={handleSubmitTwoAssets}>
-              Submit
-            </button>
-            <button
-              className="submit-button"
-              onClick={handleSavedDataTwoAssets}
-            >
-              Save
-            </button>
-            <div>{balanceReturn}</div>
+            {searchWarningA === "" && searchWarningB === "" && (
+              <div>
+                <div className="balance-value">{`Your Balance: ${balanceInput}`}</div>
+                <div className="balance-warning">{balanceWarning}</div>
+                <div className="risk-value">{`Your first Risk: ${riskValueA}`}</div>
+                <div className="risk-value">{`Your second Risk: ${riskValueB}`}</div>
+                <div className="risk-warning">{riskWarning}</div>
+                <input
+                  type="input"
+                  placeholder="Balance for Asset A"
+                  value={balanceInput}
+                  onChange={(e) => setBalanceInput(e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Risk for Asset B"
+                  value={riskValueA}
+                  onChange={(e) => setRiskValueA(e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Risk for Asset B"
+                  value={riskValueB}
+                  onChange={(e) => setRiskValueB(e.target.value)}
+                />
+                <button
+                  className="submit-button"
+                  onClick={handleSubmitTwoAssets}
+                >
+                  Submit
+                </button>
+                <button
+                  className="submit-button"
+                  onClick={handleSavedDataTwoAssets}
+                >
+                  Save
+                </button>
+                <div>{balanceReturn}</div>
+              </div>
+            )}
           </div>
         )}
       </div>

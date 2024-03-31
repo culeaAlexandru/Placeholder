@@ -3,12 +3,14 @@ import portrait from "../imgs/default-pp.jpg";
 import axios from "axios";
 import "../Dashboard.css";
 import { Link, useNavigate } from "react-router-dom";
+import jspdf from "jspdf";
 
 export default function DashboardPortfolios() {
   const [isLoggedIn, setIsLoggedIn] = useState();
   const [modal, setModal] = useState(false);
   const [username, setUsername] = useState("");
   const [portfolioData, setPortfolioData] = useState([]);
+  const [warning, setWarning] = useState("No portfolios saved");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -46,6 +48,9 @@ export default function DashboardPortfolios() {
           );
           if (response.status === 200) {
             setPortfolioData(response.data.portfolioData);
+            setWarning("");
+          } else {
+            setPortfolioData([]);
           }
         } catch (error) {
           console.error("Error fetching portfolio data:", error);
@@ -80,6 +85,40 @@ export default function DashboardPortfolios() {
     }
   };
 
+  const generatePdf = (index) => {
+    if (
+      portfolioData.length === 0 ||
+      index < 0 ||
+      index >= portfolioData.length
+    ) {
+      console.error("Invalid index or portfolio data is not available");
+      return;
+    }
+
+    const pdf = new jspdf();
+
+    setTimeout(() => {
+      const portfolio = portfolioData[index];
+      if (portfolio.assets === 1) {
+        pdf.text(`Portfolio ${index + 1}`, 20, 20);
+        pdf.text(`Balance Input: ${portfolio.balanceInput}`, 20, 30);
+        pdf.text(`Risk Input A: ${portfolio.riskInputA}`, 20, 40);
+        pdf.text(`First Asset: ${portfolio.firstAsset}`, 20, 50);
+        pdf.text(`Balance Result: ${portfolio.balanceResult}`, 20, 60);
+      } else if (portfolio.assets === 2) {
+        pdf.text(`Portfolio ${index + 1}`, 20, 20);
+        pdf.text(`Balance Input: ${portfolio.balanceInput}`, 20, 30);
+        pdf.text(`Risk Input A: ${portfolio.riskInputA}`, 20, 40);
+        pdf.text(`Risk Input B: ${portfolio.riskInputB}`, 20, 50);
+        pdf.text(`First Asset: ${portfolio.firstAsset}`, 20, 60);
+        pdf.text(`Second Asset: ${portfolio.secondAsset}`, 20, 70);
+        pdf.text(`Balance Result: ${portfolio.balanceResult}`, 20, 80);
+      }
+
+      pdf.save(`Placeholder - Portfolio ${index + 1}.pdf`);
+    }, 100);
+  };
+
   return (
     <div className="dashboard">
       <div className="page-title">
@@ -89,21 +128,30 @@ export default function DashboardPortfolios() {
       </div>
       <div className="container-middle">
         <div className="portfolio-data">
-          {portfolioData.map((portfolio, innerIndex) => (
-            <div key={innerIndex}>
-              <p>Portfolio {innerIndex + 1}</p>
-              <p>Balance Input: {portfolio.balanceInput}</p>
-              <p>Risk Input A: {portfolio.riskInputA}</p>
-              {portfolio.assets === 2 && (
-                <p>Risk Input B: {portfolio.riskInputB}</p>
-              )}
-              <p>First Asset: {portfolio.firstAsset}</p>
-              {portfolio.assets === 2 && (
-                <p>Second Asset: {portfolio.firstAsset}</p>
-              )}
-              <p>Balance Result: {portfolio.balanceResult}</p>
+          {portfolioData.length > 0 ? (
+            <div>
+              {portfolioData.map((portfolio, index) => (
+                <div key={index}>
+                  <p>Portfolio {index + 1}</p>
+                  <p>Balance Input: {portfolio.balanceInput}</p>
+                  <p>Risk Input A: {portfolio.riskInputA}</p>
+                  {portfolio.assets === 2 && (
+                    <p>Risk Input B: {portfolio.riskInputB}</p>
+                  )}
+                  <p>First Asset: {portfolio.firstAsset}</p>
+                  {portfolio.assets === 2 && (
+                    <p>Second Asset: {portfolio.secondAsset}</p>
+                  )}
+                  <p>Balance Result: {portfolio.balanceResult}</p>
+                  <button onClick={() => generatePdf(index)}>
+                    Download PDF
+                  </button>
+                </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            <p>{warning}</p>
+          )}
         </div>
       </div>
       <div className="profile">

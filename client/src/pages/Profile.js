@@ -13,7 +13,7 @@ export default function DashboardProfile() {
   const [secondNameInput, setSecondName] = useState("");
   const [countryInput, setCountry] = useState("");
   const [currencyInput, setCurrency] = useState("");
-  const [selectedPronoun, setSelectedPronoun] = useState("Mr.");
+  const [selectedPronoun, setSelectedPronoun] = useState("");
   const [pronunInput, setPronun] = useState("");
   const [profileData, setProfileData] = useState({
     firstName: "",

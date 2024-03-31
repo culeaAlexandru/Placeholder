@@ -295,11 +295,6 @@ app.post("/get-portfolio-data", async (req, res) => {
     if (user && user.Portfolios) {
       console.log("Portfolio data fetched successfully");
       res.status(200).json({ portfolioData: user.Portfolios });
-    } else {
-      console.error("User not found or no portfolio data available");
-      res
-        .status(404)
-        .json({ message: "User not found or no portfolio data available" });
     }
   } catch (error) {
     console.error("Error fetching portfolio data:", error.message);
