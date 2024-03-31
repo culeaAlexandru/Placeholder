@@ -1,13 +1,12 @@
-1. The search in Invest page searches if the name has at least one element in the name and returns it
-2. The rezolution of the pages is not flexible(eg. The elements in the Home-page are visible only on 1920x1080)
-3. If no asset/s is/are searched, after triggering the submit button, the page gets an error and the balance return is NaN
-4. If the search returns an asset with a symbol with numbers or special characters in Invest page, the balance will return NaN
-5. You have to restart the Watchlist page to see your Saved Assets
-6. You have to restart the Portfolio page to see your Profile data updated. 
-7. If the search returns an asset with a symbol with numbers or special characters in Watchlist page, the asset will be able to be saved, but the chart will not update.
-8. In  the VS Code, a warning is present for the Watchlist page.
-9. After editing some of the information in Profile, if you already had information and you did not edit it, the information will be shown twice.
-10. If you search for an asset already saved in the data-base, it will get an error in Watchlist page
+1. The search asset searches if the name has at least one element in the name and gives it
+2. The rezolution of the pages are not flexible(eg. The elements in the Home-page are visible only on 1920x1080)
+4. You have to restart the Watchlist page to see your Saved Assets
+5. You have to restart the Profile page to see your Profile datas
+6. In  the VS Code, a warning is present for the Watchlist page.
+7. After editing some of the information in Profile, if you already had information and you did not edit it, the information will be shown twice.
+8. If you search for an asset already saved in the data-base, it will get an error in Watchlist page
+9. No warning that you can't save more than 3 assets
+10. The dates are pre-defined for the API.
 
 
 
