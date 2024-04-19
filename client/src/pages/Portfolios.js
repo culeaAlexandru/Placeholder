@@ -6,13 +6,15 @@ import { Link, useNavigate } from "react-router-dom";
 import jspdf from "jspdf";
 
 export default function DashboardPortfolios() {
+  // State variables to store the login status, Log out modal visibility, user's portfolio data and to show warning message
   const [isLoggedIn, setIsLoggedIn] = useState();
   const [modal, setModal] = useState(false);
   const [username, setUsername] = useState("");
   const [portfolioData, setPortfolioData] = useState([]);
   const [warning, setWarning] = useState("No portfolios saved");
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Hook for navigation
 
+  // Effect hook to check login status on component mount
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -30,12 +32,14 @@ export default function DashboardPortfolios() {
     checkLoginStatus();
   }, []);
 
+  // Effect hook to redirect to login page if not logged in
   useEffect(() => {
     if (isLoggedIn === false) {
       navigate("/login");
     }
   }, [isLoggedIn, navigate]);
 
+  // Effect hook to fetch portfolio data when username changes
   useEffect(() => {
     if (username.length > 0) {
       const fetchPortfolioData = async () => {
@@ -60,10 +64,12 @@ export default function DashboardPortfolios() {
     }
   }, [username]);
 
+  // Function to toggle modal visibility
   const toggleModal = () => {
     setModal(!modal);
   };
 
+  // Effect hook to add/remove CSS class for body based on modal visibility
   useEffect(() => {
     if (modal) {
       document.body.classList.add("active-modal");
@@ -72,6 +78,7 @@ export default function DashboardPortfolios() {
     }
   }, [modal]);
 
+  // Function to handle user logout
   const handleLogout = async () => {
     try {
       await axios.get("http://localhost:3002/logout", {
@@ -85,6 +92,7 @@ export default function DashboardPortfolios() {
     }
   };
 
+  // Function to generate PDF for a specific portfolio
   const generatePdf = (index) => {
     if (
       portfolioData.length === 0 ||
@@ -119,14 +127,17 @@ export default function DashboardPortfolios() {
     }, 100);
   };
 
+  // Render UI
   return (
     <div className="dashboard">
+      {/* Page Title */}
       <div className="page-title">
         <Link to="/" className="custom-link">
           <h2>Placeholder</h2>
         </Link>
       </div>
       <div className="container-middle">
+        {/* Portfolio Data */}
         <div className="portfolio-data">
           {portfolioData.length > 0 ? (
             <div>
@@ -154,10 +165,12 @@ export default function DashboardPortfolios() {
           )}
         </div>
       </div>
+      {/* User Profile */}
       <div className="profile">
         <div className="username">{username}</div>
         <img src={portrait} alt=" "></img>
       </div>
+      {/* Navigation Links */}
       <div className="containers-left">
         <div className="first-container">
           <Link to="/dashboard" className="custom-link">
@@ -188,6 +201,7 @@ export default function DashboardPortfolios() {
             Log out
           </h4>
         </div>
+        {/* Modal for Logout Confirmation */}
         <div className="modal-container">
           {modal && (
             <div className="modal">

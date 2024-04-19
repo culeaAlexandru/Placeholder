@@ -16,6 +16,7 @@ export default function DashboardWatchlist() {
   const [searchState, setSearchState] = useState({
     companyName: "",
     hasSearched: false,
+    suggestions: [],
   });
   const [searchResult, setSearchResult] = useState(null);
   const [savedAssets, setSavedAssets] = useState([]);
@@ -24,7 +25,11 @@ export default function DashboardWatchlist() {
   const toDate = "2024-03-23";
   const apiKey = "SbUhzMlpiU94dp9UtJGKlPs59R6DBpGi";
   const searchApiUrl = `https://financialmodelingprep.com/api/v3/stock/list?apikey=${apiKey}`;
+  const [searchWarning, setSearchWarning] = useState(
+    "Please search for an asset"
+  );
 
+  // Effect hook to check login status on component mount
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -42,16 +47,19 @@ export default function DashboardWatchlist() {
     checkLoginStatus();
   }, []);
 
+  // Effect hook to navigate to login page if user is not logged in
   useEffect(() => {
     if (isLoggedIn === false) {
       navigate("/login");
     }
   }, [isLoggedIn, navigate]);
 
+  // Function to toggle modal visibility
   const toggleModal = () => {
     setModal(!modal);
   };
 
+  // Effect hook to add/remove class on body based on modal visibility
   useEffect(() => {
     if (modal) {
       document.body.classList.add("active-modal");
@@ -60,6 +68,7 @@ export default function DashboardWatchlist() {
     }
   }, [modal]);
 
+  // Function to handle user logout
   const handleLogout = async () => {
     try {
       await axios.get("http://localhost:3002/logout", {
@@ -73,6 +82,7 @@ export default function DashboardWatchlist() {
     }
   };
 
+  // Effect hook to fetch search results when searchState changes
   useEffect(() => {
     if (!searchState.hasSearched || !searchState.companyName) return;
 
@@ -90,22 +100,23 @@ export default function DashboardWatchlist() {
           return;
         }
 
-        const foundItem = data.find((item) => {
-          if (!item || !item.name) return false;
-          return item.name
-            .toLowerCase()
-            .includes(searchState.companyName.toLowerCase());
+        const foundItems = data.filter((item) => {
+          return (
+            item.name &&
+            item.name.toLowerCase() === searchState.companyName.toLowerCase()
+          );
         });
 
-        setSearchResult(foundItem ? [foundItem] : []);
-        setAssetSymbol(foundItem ? foundItem.symbol : "");
+        setSearchResult(foundItems);
+        setAssetSymbol(foundItems.length > 0 ? foundItems[0].symbol : "");
         setSearchState({
           ...searchState,
           hasSearched: false,
         });
-        if (foundItem) {
-          updateChartData(foundItem.symbol);
+        if (foundItems.length > 0) {
+          updateChartData(foundItems[0].symbol);
         }
+        setSearchWarning("");
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -113,6 +124,7 @@ export default function DashboardWatchlist() {
       });
   }, [searchApiUrl, searchState]);
 
+  // Function to update chart data based on selected asset symbol
   const updateChartData = (symbol) => {
     const newApiUrl = `https://financialmodelingprep.com/api/v3/historical-chart/4hour/${symbol}?from=${fromDate}&to=${toDate}&apikey=${apiKey}`;
 
@@ -130,6 +142,7 @@ export default function DashboardWatchlist() {
       });
   };
 
+  // Effect hook to draw chart when data changes
   useEffect(() => {
     if (data) {
       if (chartInstance) {
@@ -137,8 +150,10 @@ export default function DashboardWatchlist() {
       }
       drawChart();
     }
+    // eslint-disable-next-line
   }, [data]);
 
+  // Function to draw chart using Chart.js
   const drawChart = () => {
     const ctx = document.getElementById("myChart").getContext("2d");
     const newChartInstance = new Chart(ctx, {
@@ -181,6 +196,7 @@ export default function DashboardWatchlist() {
     setChartInstance(newChartInstance);
   };
 
+  // Function to handle saving asset
   const handleSaveAsset = () => {
     console.log(data);
     if (
@@ -218,6 +234,7 @@ export default function DashboardWatchlist() {
       });
   };
 
+  // Effect hook to fetch saved assets on component mount
   useEffect(() => {
     if (username.length > 0 && savedAssets === 0) {
       setWarning("No assets were saved");
@@ -233,6 +250,7 @@ export default function DashboardWatchlist() {
     }
   }, [username, savedAssets, warning]);
 
+  // Function to handle search
   const handleSearch = () => {
     setSearchState({
       ...searchState,
@@ -240,38 +258,149 @@ export default function DashboardWatchlist() {
     });
   };
 
+  // Function to handle search input change
+  const handleInputChange = (e) => {
+    const input = e.target.value;
+    setSearchState((prevState) => ({
+      ...prevState,
+      companyName: input,
+    }));
+
+    if (input.trim() === "") {
+      setSearchState((prevState) => ({
+        ...prevState,
+        suggestions: [],
+      }));
+      return;
+    }
+
+    fetch(
+      `https://financialmodelingprep.com/api/v3/search?query=${input}&limit=5&apikey=${apiKey}`
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (!data) {
+          console.error("Error: Data is null");
+          setSearchState((prevState) => ({
+            ...prevState,
+            suggestions: [],
+          }));
+          return;
+        }
+
+        const profilePromises = data.map((item) =>
+          fetch(
+            `https://financialmodelingprep.com/api/v3/profile/${item.symbol}?apikey=${apiKey}`
+          )
+            .then((response) => response.json())
+            .then((profileData) => ({
+              ...item,
+              profile: profileData[0],
+            }))
+        );
+
+        Promise.all(profilePromises)
+          .then((profiles) => {
+            const filteredSuggestions = profiles
+              .filter(
+                (profile) =>
+                  profile.profile && profile.profile.currency === "USD"
+              )
+              .map((profile) => ({
+                name: profile.name,
+                symbol: profile.symbol,
+              }));
+
+            setSearchState((prevState) => ({
+              ...prevState,
+              suggestions: filteredSuggestions,
+            }));
+          })
+          .catch((error) => {
+            console.error("Error fetching profiles:", error);
+            setSearchState((prevState) => ({
+              ...prevState,
+              suggestions: [],
+            }));
+          });
+      })
+      .catch((error) => {
+        console.error("Error fetching suggestions:", error);
+        setSearchState((prevState) => ({
+          ...prevState,
+          suggestions: [],
+        }));
+      });
+  };
+
+  // Function to handle button click for an asset
   const handleAssetButtonClick = (assetSymbol) => {
     console.log("Button clicked for asset:", assetSymbol);
     setAssetSymbol(assetSymbol);
     updateChartData(assetSymbol);
   };
 
+  // Function to handle click on search result
   const handleSearchResultClick = (symbol) => {
     setAssetSymbol(symbol);
     updateChartData(symbol);
   };
 
+  // Function to handle suggestion click
+  const handleSuggestionClick = (name) => {
+    setSearchState({
+      ...searchState,
+      companyName: name,
+      suggestions: [],
+    });
+  };
+
   return (
+    // Dashboard container
     <div className="dashboard">
+      {/* Page title */}
       <div className="page-title">
         <Link to="/" className="custom-link">
           <h2>Placeholder</h2>
         </Link>
       </div>
+      {/* Middle container */}
       <div className="container-middle">
         <div>
+          {/* Search input */}
           <input
             type="text"
             value={searchState.companyName}
-            onChange={(e) =>
-              setSearchState({
-                ...searchState,
-                companyName: e.target.value,
-              })
-            }
+            onChange={handleInputChange}
             placeholder="Enter company name"
           />
+          {/* Search button */}
           <button onClick={handleSearch}>Search</button>
+          {/* Display search suggestions if available */}
+          {searchState.suggestions.length > 0 && (
+            <div>
+              <h2>Search Suggestions:</h2>
+              <ul>
+                {searchState.suggestions.map((item) => (
+                  <li
+                    key={item.symbol}
+                    onClick={() =>
+                      handleSuggestionClick(item.name, item.symbol)
+                    }
+                  >
+                    <strong>Name:</strong> {item.name}
+                    <strong>Symbol:</strong> {item.symbol}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {/* Display search results if available */}
           {searchResult && searchResult.length > 0 ? (
             <div>
               <h2>Search Results:</h2>
@@ -288,15 +417,19 @@ export default function DashboardWatchlist() {
               </ul>
             </div>
           ) : (
-            <p>No matching company found.</p>
+            // Display search warning if no results
+            <p>{searchWarning}</p>
           )}
+          {/* Save Asset button */}
           <button onClick={handleSaveAsset}>Save Asset</button>
+          {/* Display saved assets */}
           <div>
             <h2>Saved Assets:</h2>
             {savedAssets.length > 0 ? (
               <ul>
                 {savedAssets.map((assetSymbol) => (
                   <li key={assetSymbol}>
+                    {/* Button to view saved asset data */}
                     <button onClick={() => handleAssetButtonClick(assetSymbol)}>
                       {assetSymbol}
                     </button>
@@ -304,27 +437,35 @@ export default function DashboardWatchlist() {
                 ))}
               </ul>
             ) : (
+              // Display warning if no saved assets
               <p>{warning}</p>
             )}
           </div>
+          {/* Chart canvas */}
           <canvas id="myChart"></canvas>
         </div>
       </div>
+      {/* Profile container */}
       <div className="profile">
         <div className="username">{username}</div>
+        {/* Placeholder image */}
         <img src={portrait} alt=" "></img>
       </div>
+      {/* Left containers */}
       <div className="containers-left">
         <div className="first-container">
+          {/* Link to Dashboard */}
           <Link to="/dashboard" className="custom-link">
             <h3 className="first-container-text">Dashboard</h3>
           </Link>
         </div>
         <div className="second-container">
+          {/* Links to other sections */}
           <Link to="/dashboard/invest" className="custom-link">
             <h4 className="second-container-text">Invest</h4>
           </Link>
           <Link to="/dashboard/watchlist" className="custom-link">
+            {/* Highlighted link for Watchlist */}
             <h4
               className="second-container-text"
               style={{ backgroundColor: "rgb(161, 161, 161)" }}
@@ -337,24 +478,29 @@ export default function DashboardWatchlist() {
           </Link>
         </div>
         <div className="third-container">
+          {/* Links to Profile and Logout */}
           <Link to="/dashboard/profile" className="custom-link">
             <h4 className="third-container-text">Profile</h4>
           </Link>
+          {/* Logout button */}
           <h4 className="third-container-text" onClick={toggleModal}>
             Log out
           </h4>
         </div>
+        {/* Modal for logout confirmation */}
         <div className="modal-container">
           {modal && (
             <div className="modal">
               <div onClick={toggleModal} className="overlay"></div>
               <div className="modal-content">
                 <h2>Are you sure you want to log out?</h2>
+                {/* Button to confirm logout */}
                 <Link to="/" className="custom-link">
                   <button className="modal-yes-btn" onClick={handleLogout}>
                     Yes
                   </button>
                 </Link>
+                {/* Button to cancel logout */}
                 <button className="modal-no-btn" onClick={toggleModal}>
                   No
                 </button>

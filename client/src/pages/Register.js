@@ -1,19 +1,24 @@
 import React, { useState } from "react";
-import Axios from "axios";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../Register.css";
 
 export default function Register() {
+  // Initialize state variables for email, username, password, confirmPassword, and errorMessage
   const [email, setEmail] = useState("");
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Hook for navigation
   const navigateTo = useNavigate();
 
+  // Function to handle user registration
   const creatUser = (event) => {
-    event.preventDefault();
+    event.preventDefault(); // Prevent default form submission behavior
 
+    // Validation checks for email
     if (email.includes(" ")) {
       setErrorMessage("The email cannot contain spaces");
       return;
@@ -29,6 +34,7 @@ export default function Register() {
       return;
     }
 
+    // Validation checks for username
     if (userName.trim() === "") {
       setErrorMessage("Please insert a username");
       return;
@@ -54,6 +60,7 @@ export default function Register() {
       return;
     }
 
+    // Validation checks for password
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match");
       return;
@@ -64,15 +71,18 @@ export default function Register() {
       return;
     }
 
-    Axios.post("http://localhost:3002/register", {
-      Email: email,
-      UserName: userName,
-      Password: password,
-    })
+    // Sending registration data to the server
+    axios
+      .post("http://localhost:3002/register", {
+        Email: email,
+        UserName: userName,
+        Password: password,
+      })
       .then((response) => {
+        // Handling response from the server
         if (response.data.message === "User added!") {
-          navigateTo("/login");
-          setEmail("");
+          navigateTo("/login"); // Redirecting to login page upon successful registration
+          setEmail(""); // Clearing input fields
           setUserName("");
           setPassword("");
         } else {
@@ -80,11 +90,13 @@ export default function Register() {
         }
       })
       .catch((error) => {
+        // Handling errors during registration
         console.log("Error during registration: ", error);
         setErrorMessage("Error during registration. Please try again.");
       });
   };
 
+  // Render the Register component
   return (
     <div className="register-page">
       <div className="register">
@@ -93,6 +105,7 @@ export default function Register() {
         </a>
         <div className="wrapper">
           <h1>Sign-Up</h1>
+          {/* Registration form */}
           <form>
             <div className="input-box">
               <input
@@ -138,15 +151,18 @@ export default function Register() {
                 }}
               />
             </div>
+            {/* Button to submit the form */}
             <button type="submit" className="btn-register" onClick={creatUser}>
               Register
             </button>
           </form>
+          {/* Link to login page */}
           <div className="register-link">
             <p>
               Already have an account? <a href="/login">Log in</a>
             </p>
           </div>
+          {/* Error message display */}
           <span>{errorMessage}</span>
         </div>
       </div>

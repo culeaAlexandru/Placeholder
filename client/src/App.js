@@ -8,6 +8,7 @@ import Portfolios from "./pages/Portfolios";
 import Profile from "./pages/Profile";
 import Watchlist from "./pages/Watchlist";
 import NoPage from "./pages/NoPage";
+import VerifyEmail from "./components/VerifyEmail";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/dashboard/profile" element={<Profile />} />
           <Route path="/dashboard/watchlist" element={<Watchlist />} />
           <Route path="*" element={<NoPage />} />
+          <Route path="/verify/:token" element={<VerifyEmail />} />
         </Routes>
       </BrowserRouter>
     </div>

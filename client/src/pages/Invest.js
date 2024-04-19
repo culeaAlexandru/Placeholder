@@ -25,10 +25,12 @@ export default function DashboardInvest() {
   const [searchStateA, setSearchStateA] = useState({
     companyName: "",
     hasSearched: false,
+    suggestions: [],
   });
   const [searchStateB, setSearchStateB] = useState({
     companyName: "",
     hasSearched: false,
+    suggestions: [],
   });
   const [searchResultA, setSearchResultA] = useState(null);
   const [searchResultB, setSearchResultB] = useState(null);
@@ -43,60 +45,69 @@ export default function DashboardInvest() {
   const [searchWarningB, setSearchWarningB] = useState(
     "Please search for an asset"
   );
+  const [showInputA, setShowInputA] = useState(true);
+  const [showInputB, setShowInputB] = useState(true);
+  const [showSearchAgainButtonA, setShowSearchAgainButtonA] = useState(false);
+  const [showSearchAgainButtonB, setShowSearchAgainButtonB] = useState(false);
 
   const apiKey = "SbUhzMlpiU94dp9UtJGKlPs59R6DBpGi";
   const searchApiUrl = `https://financialmodelingprep.com/api/v3/stock/list?apikey=${apiKey}`;
 
+  // Check user's login status
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
         const response = await axios.get("http://localhost:3002", {
-          withCredentials: true,
+          withCredentials: true, // Sending cookies with the request
         });
-        const { valid, username } = response.data;
-        setIsLoggedIn(valid);
-        setUsername(username);
+        const { valid, username } = response.data; // Destructuring response data
+        setIsLoggedIn(valid); // Setting login status
+        setUsername(username); // Setting username
       } catch (error) {
-        console.error("Error checking login status:", error);
+        console.error("Error checking login status:", error); // Handling error
       }
     };
 
-    checkLoginStatus();
+    checkLoginStatus(); // Calling function to check login status
   }, []);
 
+  // Redirect if not logged in
   useEffect(() => {
     if (isLoggedIn === false) {
-      navigate("/login");
+      navigate("/login"); // Redirecting to login page
     }
   }, [isLoggedIn, navigate]);
 
+  // Function to toggle the Log out modal visibility
   const toggleModal = () => {
-    setModal(!modal);
+    setModal(!modal); // Toggling modal state
   };
 
+  // Add/remove class for modal
   useEffect(() => {
     if (modal) {
-      document.body.classList.add("active-modal");
+      document.body.classList.add("active-modal"); // Adding class to body for active modal
     } else {
-      document.body.classList.remove("active-modal");
+      document.body.classList.remove("active-modal"); // Removing class from body
     }
   }, [modal]);
 
+  // Fetch search results for asset A
   useEffect(() => {
-    if (!searchStateA.hasSearched || !searchStateA.companyName) return;
+    if (!searchStateA.hasSearched || !searchStateA.companyName) return; // Return if search not performed or company name empty
 
-    fetch(searchApiUrl)
+    fetch(searchApiUrl) // Fetching data from API
       .then((response) => {
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error(`HTTP error! status: ${response.status}`); // Handling HTTP error
         }
-        return response.json();
+        return response.json(); // Parsing response as JSON
       })
       .then((data) => {
         if (!data) {
-          console.error("Error: Data is null");
-          setSearchResultA(null);
-          setSearchWarningB("No matching company found.");
+          console.error("Error: Data is null"); // Handling null data
+          setSearchResultA(null); // Setting search result to null
+          setSearchWarningB("No matching company found."); // Setting search warning
           return;
         }
 
@@ -104,38 +115,39 @@ export default function DashboardInvest() {
           if (!item || !item.name) return false;
           return item.name
             .toLowerCase()
-            .includes(searchStateA.companyName.toLowerCase());
+            .includes(searchStateA.companyName.toLowerCase()); // Checking for matching company name
         });
 
-        setSearchResultA(foundItem ? [foundItem] : []);
-        setAssetSymbolA(foundItem ? foundItem.symbol : "");
+        setSearchResultA(foundItem ? [foundItem] : []); // Setting search result
+        setAssetSymbolA(foundItem ? foundItem.symbol : ""); // Setting asset symbol
         setSearchStateA({
           ...searchStateA,
           hasSearched: false,
-        });
-        setSearchWarningA("");
+        }); // Resetting search state
+        setSearchWarningA(""); // Clearing search warning
       })
       .catch((error) => {
-        console.error("Error fetching data:", error);
-        setSearchResultA(null);
+        console.error("Error fetching data:", error); // Handling fetch error
+        setSearchResultA(null); // Setting search result to null
       });
-  }, [searchApiUrl, searchStateA]);
+  }, [searchApiUrl, searchStateA]); // Dependencies for useEffect hook
 
+  // Fetch search results for asset B
   useEffect(() => {
-    if (!searchStateB.hasSearched || !searchStateB.companyName) return;
+    if (!searchStateB.hasSearched || !searchStateB.companyName) return; // Return if search not performed or company name empty
 
-    fetch(searchApiUrl)
+    fetch(searchApiUrl) // Fetching data from API
       .then((response) => {
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error(`HTTP error! status: ${response.status}`); // Handling HTTP error
         }
-        return response.json();
+        return response.json(); // Parsing response as JSON
       })
       .then((data) => {
         if (!data) {
-          console.error("Error: Data is null");
-          setSearchResultA(null);
-          setSearchWarningB("No matching company found.");
+          console.error("Error: Data is null"); // Handling null data
+          setSearchResultB(null); // Setting search result to null
+          setSearchWarningB("No matching company found."); // Setting search warning
           return;
         }
 
@@ -143,61 +155,239 @@ export default function DashboardInvest() {
           if (!item || !item.name) return false;
           return item.name
             .toLowerCase()
-            .includes(searchStateB.companyName.toLowerCase());
+            .includes(searchStateB.companyName.toLowerCase()); // Checking for matching company name
         });
 
-        setSearchResultB(foundItem ? [foundItem] : []);
-        setAssetSymbolB(foundItem ? foundItem.symbol : "");
+        setSearchResultB(foundItem ? [foundItem] : []); // Setting search result
+        setAssetSymbolB(foundItem ? foundItem.symbol : ""); // Setting asset symbol
         setSearchStateB({
           ...searchStateB,
           hasSearched: false,
-        });
-        setSearchWarningB("");
+        }); // Resetting search state
+        setSearchWarningB(""); // Clearing search warning
       })
       .catch((error) => {
-        console.error("Error fetching data:", error);
-        setSearchResultA(null);
+        console.error("Error fetching data:", error); // Handling fetch error
+        setSearchResultA(null); // Setting search result to null
       });
-  }, [searchApiUrl, searchStateB]);
+  }, [searchApiUrl, searchStateB]); // Dependencies for useEffect hook
 
+  // Handle search for asset A
   const handleSearchA = () => {
     setSearchStateA({
       ...searchStateA,
       hasSearched: true,
-    });
+    }); // Setting search state
+    setShowInputA(false); // Hiding input field
+    setShowSearchAgainButtonA(true); // Showing search again button
   };
 
+  // Handle search for asset B
   const handleSearchB = () => {
     setSearchStateB({
       ...searchStateB,
       hasSearched: true,
-    });
+    }); // Setting search state
+    setShowInputB(false); // Hiding input field
+    setShowSearchAgainButtonB(true); // Showing search again button
+  };
+
+  // Handle input change for asset A
+  const handleInputChangeA = (e) => {
+    const input = e.target.value; // Getting input value
+    setSearchStateA((prevState) => ({
+      ...prevState,
+      companyName: input,
+    })); // Setting company name in search state
+
+    if (input.trim() === "") {
+      setSearchStateA((prevState) => ({
+        ...prevState,
+        suggestions: [],
+      })); // Clearing suggestions if input is empty
+      return;
+    }
+
+    fetch(
+      `https://financialmodelingprep.com/api/v3/search?query=${input}&limit=5&apikey=${apiKey}`
+    ) // Fetching search suggestions
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`); // Handling HTTP error
+        }
+        return response.json(); // Parsing response as JSON
+      })
+      .then((data) => {
+        if (!data) {
+          console.error("Error: Data is null"); // Handling null data
+          setSearchStateA((prevState) => ({
+            ...prevState,
+            suggestions: [],
+          })); // Clearing suggestions
+          return;
+        }
+
+        const profilePromises = data.map((item) =>
+          fetch(
+            `https://financialmodelingprep.com/api/v3/profile/${item.symbol}?apikey=${apiKey}`
+          )
+            .then((response) => response.json())
+            .then((profileData) => ({
+              ...item,
+              profile: profileData[0],
+            }))
+        );
+
+        Promise.all(profilePromises)
+          .then((profiles) => {
+            const filteredSuggestions = profiles
+              .filter(
+                (profile) =>
+                  profile.profile && profile.profile.currency === "USD"
+              )
+              .map((profile) => ({
+                name: profile.name,
+                symbol: profile.symbol,
+              }));
+
+            setSearchStateA((prevState) => ({
+              ...prevState,
+              suggestions: filteredSuggestions,
+            })); // Setting filtered suggestions
+          })
+          .catch((error) => {
+            console.error("Error fetching profiles:", error); // Handling fetch error
+            setSearchStateA((prevState) => ({
+              ...prevState,
+              suggestions: [],
+            })); // Clearing suggestions
+          });
+      })
+      .catch((error) => {
+        console.error("Error fetching suggestions:", error); // Handling fetch error
+        setSearchStateA((prevState) => ({
+          ...prevState,
+          suggestions: [],
+        })); // Clearing suggestions
+      });
+  };
+
+  // Handle input change for asset B
+  const handleInputChangeB = (e) => {
+    const input = e.target.value; // Getting input value
+    setSearchStateB((prevState) => ({
+      ...prevState,
+      companyName: input,
+    })); // Setting company name in search state
+
+    if (input.trim() === "") {
+      setSearchStateB((prevState) => ({
+        ...prevState,
+        suggestions: [],
+      })); // Clearing suggestions if input is empty
+      return;
+    }
+
+    fetch(
+      `https://financialmodelingprep.com/api/v3/search?query=${input}&limit=5&apikey=${apiKey}`
+    ) // Fetching search suggestions
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`); // Handling HTTP error
+        }
+        return response.json(); // Parsing response as JSON
+      })
+      .then((data) => {
+        if (!data) {
+          console.error("Error: Data is null"); // Handling null data
+          setSearchStateB((prevState) => ({
+            ...prevState,
+            suggestions: [],
+          })); // Clearing suggestions
+          return;
+        }
+        const profilePromises = data.map((item) =>
+          fetch(
+            `https://financialmodelingprep.com/api/v3/profile/${item.symbol}?apikey=${apiKey}`
+          )
+            .then((response) => response.json())
+            .then((profileData) => ({
+              ...item,
+              profile: profileData[0],
+            }))
+        );
+
+        Promise.all(profilePromises)
+          .then((profiles) => {
+            const filteredSuggestions = profiles
+              .filter(
+                (profile) =>
+                  profile.profile && profile.profile.currency === "USD"
+              )
+              .map((profile) => ({
+                name: profile.name,
+                symbol: profile.symbol,
+              }));
+
+            setSearchStateB((prevState) => ({
+              ...prevState,
+              suggestions: filteredSuggestions,
+            })); // Setting filtered suggestions
+          })
+          .catch((error) => {
+            console.error("Error fetching suggestions:", error); // Handling fetch error
+            setSearchStateB((prevState) => ({
+              ...prevState,
+              suggestions: [],
+            })); // Clearing suggestions
+          });
+      });
   };
 
   const handleButtonAssetsClick = (buttonNumber) => {
-    setSelectedButton(buttonNumber);
-    setBalanceInput("");
-    setRiskInputA("");
-    setRiskInputB("");
-    setBalanceReturn(0);
+    setSelectedButton(buttonNumber); // Set selected button number
+    setBalanceInput(""); // Clear balance input
+    setRiskInputA(""); // Clear risk input for asset A
+    setRiskInputB(""); // Clear risk input for asset B
+    setBalanceReturn(0); // Reset balance return
   };
 
+  // Function to handle click on a suggestion for asset A
+  const handleSuggestionClickA = (name) => {
+    setSearchStateA({
+      ...searchStateA,
+      companyName: name, // Update selected company name for asset A
+      suggestions: [], // Clear suggestions
+    });
+  };
+
+  // Function to handle click on a suggestion for asset B
+  const handleSuggestionClickB = (name) => {
+    setSearchStateB({
+      ...searchStateB,
+      companyName: name, // Update selected company name for asset B
+      suggestions: [], // Clear suggestions
+    });
+  };
+
+  // Define start and end dates for historical data retrieval
   const fromDate = "2023-10-10";
   const toDate = "2023-12-10";
 
+  // Effect hook to fetch historical data for asset A when its symbol changes
   useEffect(() => {
-    if (!assetSymbolA) return;
+    if (!assetSymbolA) return; // Return if asset symbol A is not set
     const histroyApiUrlA = `https://financialmodelingprep.com/api/v3/historical-chart/4hour/${assetSymbolA}?from=${fromDate}&to=${toDate}&apikey=${apiKey}`;
     console.log(histroyApiUrlA);
     fetch(histroyApiUrlA)
       .then((response) => response.json())
       .then((data) => {
+        // Filter data to include only closing prices at 3 PM each day
         const filtered = data.filter((item) => {
           const date = new Date(item.date);
           return date.getHours() === 15;
         });
-
-        setFilteredDataA(filtered);
+        setFilteredDataA(filtered); // Set filtered data for asset A
         console.log(filtered);
       })
       .catch((error) => {
@@ -206,18 +396,18 @@ export default function DashboardInvest() {
   }, [assetSymbolA, fromDate, toDate]);
 
   useEffect(() => {
-    if (!assetSymbolB) return;
+    if (!assetSymbolB) return; // Return if asset symbol B is not set
     const histroyApiUrlB = `https://financialmodelingprep.com/api/v3/historical-chart/4hour/${assetSymbolB}?from=${fromDate}&to=${toDate}&apikey=${apiKey}`;
     console.log(histroyApiUrlB);
     fetch(histroyApiUrlB)
       .then((response) => response.json())
       .then((data) => {
+        // Filter data to include only closing prices at 3 PM each day
         const filtered = data.filter((item) => {
           const date = new Date(item.date);
           return date.getHours() === 15;
         });
-
-        setFilteredDataB(filtered);
+        setFilteredDataB(filtered); // Set filtered data for asset B
         console.log(filtered);
       })
       .catch((error) => {
@@ -225,10 +415,11 @@ export default function DashboardInvest() {
       });
   }, [assetSymbolB, fromDate, toDate]);
 
+  // Function to handle submission when only one asset is selected
   const handleSubmitOneAsset = async () => {
     console.log(filteredDataA.map((item) => item.close));
     const balance = Number(balanceInput);
-    let riskA = riskValueA;
+    const riskA = 10;
 
     // Validate balance
     if (isNaN(balance) || balance <= 0) {
@@ -247,17 +438,7 @@ export default function DashboardInvest() {
     } else {
       setRiskWarning("");
     }
-
-    try {
-      await axios.post("http://localhost:3002/save-risk", {
-        username: username,
-        riskValueA: riskA,
-      });
-      setRiskValueA(riskA);
-    } catch (error) {
-      console.error("Error saving risk value:", error.message);
-    }
-
+    // Calculate portfolio returns and display results
     const closesA = filteredDataA.map((item) => item.close);
 
     const returnsA = calculateDailyReturns(closesA);
@@ -336,11 +517,13 @@ export default function DashboardInvest() {
     console.log("Portfolio Variance:", portfolioVariance);
   };
 
+  // Function to handle submission when two assets are selected
   const handleSubmitTwoAssets = async () => {
     const balance = Number(balanceInput);
     let riskA = 0;
     let riskB = 0;
 
+    // Validate balance input and risk inputs for both assets
     if (riskValueA && !isNaN(parseFloat(riskValueA))) {
       riskA = parseFloat(riskValueA);
     }
@@ -376,6 +559,8 @@ export default function DashboardInvest() {
     } else {
       setRiskWarning("");
     }
+
+    // Saving risk values for both assets
     try {
       await axios.post("http://localhost:3002/save-risk", {
         username: username,
@@ -388,6 +573,7 @@ export default function DashboardInvest() {
       console.error("Error saving risk value:", error.message);
     }
 
+    // Calculate portfolio returns and display results
     const closesA = filteredDataA.map((item) => item.close);
     const closesB = filteredDataB.map((item) => item.close);
 
@@ -496,6 +682,7 @@ export default function DashboardInvest() {
     console.log("Portfolio Variance:", portfolioVariance);
   };
 
+  // Function to calculate daily returns given an array of closing prices
   const calculateDailyReturns = (closes) => {
     return closes.slice(1).map((close, index) => {
       const previousClose = closes[index];
@@ -503,15 +690,18 @@ export default function DashboardInvest() {
     });
   };
 
+  // Function to calculate the mean return of an array of returns
   const calculateMeanReturn = (array) => {
     const sum = array.reduce((acc, returnVal) => acc + returnVal, 0);
     return sum / array.length;
   };
 
+  // Function to calculate deviations from the mean for each return in an array
   const calculateDeviations = (array, mean) => {
     return array.map((returnVal) => returnVal - mean);
   };
 
+  // Function to calculate covariance between two arrays of returns
   const calculateCovariance = (array1, array2) => {
     const n = array1.length;
     let sum = 0;
@@ -521,6 +711,7 @@ export default function DashboardInvest() {
     return sum / (n - 1);
   };
 
+  // Function to handle user logout
   const handleLogout = async () => {
     try {
       await axios.get("http://localhost:3002/logout", {
@@ -534,6 +725,7 @@ export default function DashboardInvest() {
     }
   };
 
+  // Effect hook to fetch risk values for assets A and B when user is logged in
   useEffect(() => {
     if (isLoggedIn) {
       getRiskValueA(username).then((riskValueA) => {
@@ -545,6 +737,7 @@ export default function DashboardInvest() {
     }
   }, [isLoggedIn, username]);
 
+  // Function to fetch risk value for asset A from the server
   const getRiskValueA = async (username) => {
     try {
       const response = await axios.post("http://localhost:3002/get-risk", {
@@ -559,6 +752,8 @@ export default function DashboardInvest() {
       console.error("Error fetching risk value:", error.message);
     }
   };
+
+  // Function to fetch risk value for asset B from the server
   const getRiskValueB = async (username) => {
     try {
       const response = await axios.post("http://localhost:3002/get-risk", {
@@ -574,6 +769,7 @@ export default function DashboardInvest() {
     }
   };
 
+  // Function to handle saving data for a single asset portfolio
   const handleSavedDataOneAsset = async () => {
     const firstAssetName =
       searchResultA.length > 0 ? searchResultA[0].name : "";
@@ -603,6 +799,7 @@ export default function DashboardInvest() {
     }
   };
 
+  // Function to handle saving data for a two asset portfolio
   const handleSavedDataTwoAssets = async () => {
     const firstAssetName =
       searchResultA.length > 0 ? searchResultA[0].name : "";
@@ -638,30 +835,64 @@ export default function DashboardInvest() {
   return (
     <div className="dashboard">
       <div className="page-title">
+        {/* Link to home */}
         <Link to="/" className="custom-link">
           <h2>Placeholder</h2>
         </Link>
       </div>
       <div className="container-middle">
         <div>
-          <button onClick={() => handleButtonAssetsClick(1)}>Button 1</button>
-          <button onClick={() => handleButtonAssetsClick(2)}>Button 2</button>
-          {selectedButton && <p>Selected Button: {selectedButton}</p>}
+          {/* Buttons to select one or two assets */}
+          <button onClick={() => handleButtonAssetsClick(1)}>One Asset</button>
+          <button onClick={() => handleButtonAssetsClick(2)}>Two Assets</button>
+          <p></p>
         </div>
+        {/* Render content based on selected button */}
         {selectedButton === 1 && (
           <div>
-            <input
-              type="text"
-              value={searchStateA.companyName}
-              onChange={(e) =>
-                setSearchStateA({
-                  ...searchStateA,
-                  companyName: e.target.value,
-                })
-              }
-              placeholder="Enter company name"
-            />
-            <button onClick={handleSearchA}>Search</button>
+            {/* Asset A search input */}
+            {showInputA && (
+              <>
+                <input
+                  type="text"
+                  value={searchStateA.companyName}
+                  onChange={handleInputChangeA}
+                  placeholder="Enter company name"
+                />
+                <button onClick={handleSearchA}>Search</button>
+                {/* Display search suggestions */}
+                {searchStateA.suggestions.length > 0 && (
+                  <div>
+                    <h2>Search Suggestions:</h2>
+                    <ul>
+                      {searchStateA.suggestions.map((item) => (
+                        <li
+                          key={item.symbol}
+                          onClick={() =>
+                            handleSuggestionClickA(item.name, item.symbol)
+                          }
+                        >
+                          <strong>Name:</strong> {item.name}
+                          <strong>Symbol:</strong> {item.symbol}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            )}
+            {/* Show search again button for Asset A */}
+            {showSearchAgainButtonA && (
+              <button
+                onClick={() => {
+                  setShowInputA(true);
+                  setShowSearchAgainButtonA(false);
+                }}
+              >
+                Search Again
+              </button>
+            )}
+            {/* Display search results or warnings for Asset A */}
             {searchResultA && searchResultA.length > 0 ? (
               <div>
                 <h2>Search Results:</h2>
@@ -677,30 +908,22 @@ export default function DashboardInvest() {
             ) : (
               <p>{searchWarningA}</p>
             )}
+            {/* Render balance input and buttons for Asset A */}
             {searchWarningA === "" && (
               <div>
                 <div className="balance-value">{`Your Balance: ${balanceInput}`}</div>
                 <div className="balance-warning">{balanceWarning}</div>
-                <div className="risk-value">{`Your Risk: ${riskValueA}`}</div>
-                <div className="risk-warning">{riskWarning}</div>
                 <input
                   type="input"
                   placeholder="Balance for Asset A"
                   value={balanceInput}
                   onChange={(e) => setBalanceInput(e.target.value)}
                 />
-                <input
-                  type="text"
-                  placeholder="Risk for Asset A"
-                  value={riskValueA}
-                  onChange={(e) => setRiskValueA(e.target.value)}
-                />
-
                 <button
                   className="submit-button"
                   onClick={handleSubmitOneAsset}
                 >
-                  Submit
+                  Calculate
                 </button>
                 <button
                   className="submit-button"
@@ -713,21 +936,52 @@ export default function DashboardInvest() {
             )}
           </div>
         )}
-
+        {/* Render content for two assets */}
         {selectedButton === 2 && (
           <div>
-            <input
-              type="text"
-              value={searchStateA.companyName}
-              onChange={(e) =>
-                setSearchStateA({
-                  ...searchStateA,
-                  companyName: e.target.value,
-                })
-              }
-              placeholder="Enter company name"
-            />
-            <button onClick={handleSearchA}>Search</button>
+            {/* Asset A search input */}
+            {showInputA && (
+              <>
+                <input
+                  type="text"
+                  value={searchStateA.companyName}
+                  onChange={handleInputChangeA}
+                  placeholder="Enter company name"
+                />
+                <button onClick={handleSearchA}>Search</button>
+                {/* Display search suggestions */}
+                {searchStateA.suggestions.length > 0 && (
+                  <div>
+                    <h2>Search Suggestions:</h2>
+                    <ul>
+                      {searchStateA.suggestions.map((item) => (
+                        <li
+                          key={item.symbol}
+                          onClick={() =>
+                            handleSuggestionClickA(item.name, item.symbol)
+                          }
+                        >
+                          <strong>Name:</strong> {item.name}
+                          <strong>Symbol:</strong> {item.symbol}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            )}
+            {/* Show search again button for Asset A */}
+            {showSearchAgainButtonA && (
+              <button
+                onClick={() => {
+                  setShowInputA(true);
+                  setShowSearchAgainButtonA(false);
+                }}
+              >
+                Search Again
+              </button>
+            )}
+            {/* Display search results or warning for Asset A */}
             {searchResultA && searchResultA.length > 0 ? (
               <div>
                 <h2>Search Results:</h2>
@@ -743,18 +997,49 @@ export default function DashboardInvest() {
             ) : (
               <p>{searchWarningA}</p>
             )}
-            <input
-              type="text"
-              value={searchStateB.companyName}
-              onChange={(e) =>
-                setSearchStateB({
-                  ...searchStateB,
-                  companyName: e.target.value,
-                })
-              }
-              placeholder="Enter company name"
-            />
-            <button onClick={handleSearchB}>Search</button>
+            {/* Asset B search input */}
+            {showInputB && (
+              <>
+                <input
+                  type="text"
+                  value={searchStateB.companyName}
+                  onChange={handleInputChangeB}
+                  placeholder="Enter company name"
+                />
+                <button onClick={handleSearchB}>Search</button>
+                {/* Display search suggestions */}
+                {searchStateB.suggestions.length > 0 && (
+                  <div>
+                    <h2>Search Suggestions:</h2>
+                    <ul>
+                      {searchStateB.suggestions.map((item) => (
+                        <li
+                          key={item.symbol}
+                          onClick={() =>
+                            handleSuggestionClickB(item.name, item.symbol)
+                          }
+                        >
+                          <strong>Name:</strong> {item.name}
+                          <strong>Symbol:</strong> {item.symbol}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            )}
+            {/* Show search again button for Asset B */}
+            {showSearchAgainButtonB && (
+              <button
+                onClick={() => {
+                  setShowInputB(true);
+                  setShowSearchAgainButtonB(false);
+                }}
+              >
+                Search Again
+              </button>
+            )}
+            {/* Display search results or warning for Asset A */}
             {searchResultB && searchResultB.length > 0 ? (
               <div>
                 <h2>Search Results:</h2>
@@ -813,17 +1098,22 @@ export default function DashboardInvest() {
           </div>
         )}
       </div>
+      {/* Profile information and navigation */}
       <div className="profile">
         <div className="username">{username}</div>
         <img src={portrait} alt=" "></img>
       </div>
+      {/* Navigation links */}
       <div className="containers-left">
+        {/* Dashboard links */}
         <div className="first-container">
           <Link to="/dashboard" className="custom-link">
             <h3 className="first-container-text">Dashboard</h3>
           </Link>
         </div>
+        {/* Investment-related links */}
         <div className="second-container">
+          {/* Highlighted "Invest" link */}
           <Link to="/dashboard/invest" className="custom-link">
             <h4
               className="second-container-text"
@@ -839,6 +1129,7 @@ export default function DashboardInvest() {
             <h4 className="second-container-text">Portfolios</h4>
           </Link>
         </div>
+        {/* Profile and logout links */}
         <div className="third-container">
           <Link to="/dashboard/profile" className="custom-link">
             <h4 className="third-container-text">Profile</h4>
@@ -847,6 +1138,7 @@ export default function DashboardInvest() {
             Log out
           </h4>
         </div>
+        {/* Logout confirmation modal */}
         <div className="modal-container">
           {modal && (
             <div className="modal">

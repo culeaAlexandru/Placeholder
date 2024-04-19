@@ -1,38 +1,28 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import * as d3 from "d3";
 import { Link, useNavigate } from "react-router-dom";
 import "../Home-page.css";
 import "../Home-page-loggedIn.css";
 import portrait from "../imgs/default-pp.jpg";
-
-const initializeData = (id, region) => ({
-  id,
-  region,
-  value: Array.from({ length: 7 }, () => Math.floor(Math.random() * 21)),
-});
-
-const initialData = [
-  initializeData("d1", "Asset 1"),
-  initializeData("d2", "Asset 2"),
-  initializeData("d3", "Asset 3"),
-  initializeData("d4", "Asset 4"),
-];
+import Chart from "chart.js/auto";
 
 export default function Homepage() {
+  // State variables to manage login status, slider value, slider visibility, interaction, Log out modal visibility, username, and chart data
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
-  const [selectedData, setSelectedData] = useState([]);
   const [sliderValue, setSliderValue] = useState(0);
   const [isSliderVisible, setIsSliderVisible] = useState(false);
   const [isSliderInteracted, setIsSliderInteracted] = useState(false);
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState("");
+  const [data, setData] = useState(null);
+  const chartRef = useRef(null);
+  // Navigation hook
+  const navigate = useNavigate();
 
-  const chartContainerRef = useRef(null);
-
+  // Set axios default credentials to true
   axios.defaults.withCredentials = true;
 
+  // Effect hook to check if the user is logged in when the component mounts
   useEffect(() => {
     axios.get("http://localhost:3002").then((res) => {
       if (res.data.valid) {
@@ -44,6 +34,7 @@ export default function Homepage() {
     });
   }, []);
 
+  // Effect hook to check if the user was previously logged in
   useEffect(() => {
     const isUserLoggedIn = localStorage.getItem("isLoggedIn");
 
@@ -54,6 +45,7 @@ export default function Homepage() {
     }
   }, []);
 
+  // Function to handle user logout
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     setIsLoggedIn(false);
@@ -67,98 +59,7 @@ export default function Homepage() {
       });
   };
 
-  useEffect(() => {
-    if (isChecked) {
-      console.log(selectedData);
-
-      // Function to create and update the chart
-      const chart = () => {
-        const width = 600;
-        const height = 400;
-        const marginTop = 50;
-        const marginRight = 50;
-        const marginBottom = 30;
-        const marginLeft = 40;
-
-        const tickValues = Array.from({ length: 7 }, (_, i) => i + 1);
-
-        // X and Y scales
-        const x = d3
-          .scaleBand()
-          .domain(tickValues)
-          .range([marginLeft - 80, width - marginRight + 120])
-          .padding(1.7);
-
-        const y = d3
-          .scaleLinear()
-          .domain([0, 20])
-          .range([height - marginBottom, marginTop]);
-
-        // SVG container for the chart
-        const svg = d3
-          .select(chartContainerRef.current)
-          .attr("width", width)
-          .attr("height", height)
-          .attr("viewBox", [0, 0, width, height])
-          .attr("style", "max-width: 100%; height: auto;");
-
-        // Remove any existing elements within the SVG
-        svg.selectAll("*").remove();
-
-        // X-axis
-        svg
-          .append("g")
-          .attr("transform", `translate(0,${height - marginBottom})`)
-          .call(
-            d3.axisBottom(x).tickValues(tickValues).tickFormat(d3.format("d"))
-          )
-          .call((g) => g.select(".domain").remove());
-
-        // Y-axis
-        svg
-          .append("g")
-          .attr("transform", `translate(${marginLeft},0)`)
-          .call(
-            d3
-              .axisRight(y)
-              .tickSize(width - marginLeft - marginRight)
-              .ticks(11)
-          )
-          .call((g) => g.select(".domain").remove())
-          .call((g) =>
-            g
-              .selectAll(".tick:not(:first-of-type) line")
-              .attr("stroke-opacity", 0.5)
-              .attr("stroke-dasharray", "2,2")
-          )
-          .call((g) => g.selectAll(".tick text").attr("x", 4).attr("dy", -4));
-
-        // Line chart
-        svg
-          .append("path")
-          .datum(selectedData)
-          .attr("fill", "none")
-          .attr("stroke", "steelblue")
-          .attr("stroke-width", 1.5)
-          .attr(
-            "d",
-            d3
-              .line()
-              .x((d, i) => x(i + 1))
-              .y((d) => y(d))
-          );
-      };
-
-      // Call the chart function
-      chart();
-    }
-  }, [isChecked, selectedData]);
-
-  const handleCheckboxChange = (data) => {
-    const selectedValue = initialData.find((d) => d.id === data.id).value;
-    setSelectedData(selectedValue);
-    setIsChecked(true);
-  };
+  // Function to handle slider input
   const handleSliderInput = (e) => {
     const value = parseInt(e.target.value, 10);
     setSliderValue(value);
@@ -167,6 +68,7 @@ export default function Homepage() {
     sessionStorage.setItem("riskValue", value);
   };
 
+  // Functions to handle slider mouse events
   const handleSliderMouseDown = () => {
     showValue();
   };
@@ -193,16 +95,19 @@ export default function Homepage() {
     setIsSliderVisible(false);
   };
 
+  // Function to set slider position styles
   const sliderPosition = (sliderValue / 10) * 100;
   const sliderStyles = {
     left: `${sliderPosition}%`,
     display: isSliderVisible ? "block" : "none",
   };
 
+  // Styles for slider text position
   const pStyles = isSliderVisible
     ? { position: "relative", bottom: "50px" }
     : {};
 
+  // Ref for dropdown menu
   const menuRef = useRef(null);
   useEffect(() => {
     let handler = (e) => {
@@ -216,8 +121,7 @@ export default function Homepage() {
     };
   }, [menuRef]);
 
-  const navigate = useNavigate();
-
+  // Function to handle continue button click
   const handleContinue = async (e) => {
     e.preventDefault();
     console.log("Called");
@@ -245,12 +149,86 @@ export default function Homepage() {
     }
   };
 
+  // Effect hook to retrieve risk value from session storage
   useEffect(() => {
     const riskValue = sessionStorage.getItem("riskValue");
     if (riskValue) {
       setSliderValue(parseInt(riskValue, 10));
       sessionStorage.removeItem("riskValue");
     }
+  }, []);
+
+  // Effect hook to render chart using Chart.js
+  useEffect(() => {
+    if (data) {
+      if (chartRef.current) {
+        const ctx = chartRef.current.getContext("2d");
+        const newChartInstance = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: data.map((item) =>
+              new Date(item.date).toLocaleDateString()
+            ),
+            datasets: [
+              {
+                label: "Close Value",
+                data: data.map((item) => item.close),
+                borderColor: "rgba(255, 99, 132, 1)",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            scales: {
+              y: {
+                beginAtZero: false,
+                ticks: {
+                  font: {
+                    size: 12,
+                  },
+                },
+              },
+              x: {
+                display: true,
+                ticks: {
+                  font: {
+                    size: 12,
+                  },
+                },
+                grid: {
+                  display: false,
+                },
+              },
+            },
+          },
+        });
+        chartRef.current = newChartInstance;
+      }
+    }
+  }, [data]);
+
+  // Effect hook to fetch chart data from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const apiUrl = `https://financialmodelingprep.com/api/v3/historical-chart/4hour/AA?from=2023-03-23&to=2024-03-23&apikey=SbUhzMlpiU94dp9UtJGKlPs59R6DBpGi`;
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        const filteredData = data.filter((item) => {
+          const date = new Date(item.date);
+          return date;
+        });
+        setData(filteredData);
+      } catch (error) {
+        console.error("Error fetching or processing data:", error);
+        setData([]);
+      }
+    };
+
+    fetchData();
   }, []);
 
   return (
@@ -325,7 +303,6 @@ export default function Homepage() {
           </div>
         )}
       </div>
-
       {/* Common Slider Container */}
       <div className="slider-container">
         <p className="slider-text" style={pStyles}>
@@ -356,27 +333,8 @@ export default function Homepage() {
           <button className="continue-button">Continue</button>
         </form>
       </div>
-
-      {/* Common Chart */}
-      <div className="chart">
-        <div className="chart-container">
-          <svg ref={chartContainerRef}></svg>
-        </div>
-        <div className="data-container">
-          {/* List of regions with checkboxes */}
-          <ul>
-            {initialData.map((data) => (
-              <li key={data.id}>
-                <span>{data.region}</span>
-                <input
-                  type="checkbox"
-                  checked={isChecked && selectedData === data.value}
-                  onChange={() => handleCheckboxChange(data)}
-                />
-              </li>
-            ))}
-          </ul>
-        </div>
+      <div>
+        <canvas id="myChart" ref={chartRef}></canvas>
       </div>
     </div>
   );

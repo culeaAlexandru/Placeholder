@@ -4,27 +4,34 @@ const { MongoClient } = require("mongodb");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
+const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
+// Middleware setup
 app.use(express.json());
 app.use(
   cors({
     origin: ["http://localhost:3000"],
     methods: ["POST", "GET", "PUT"],
-    credentials: true,
+    credentials: true, // Allow sending cookies
   })
 );
 app.use(
   session({
-    secret: "secret",
+    secret: "secret", // Secret used to sign the session ID cookie
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: false,
-      maxAge: 1000 * 60 * 60 * 24 * 7,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // Session duration: 7 days
     },
   })
 );
 
+// MongoDB connection setup
 const uri =
   "mongodb+srv://ionutalexandruculea:nsnsbahja@placeholder.3rhmcks.mongodb.net/?retryWrites=true&w=majority&appName=Placeholder";
 const client = new MongoClient(uri, {
@@ -32,12 +39,15 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
 });
 
+// Number of salt rounds for bcrypt hashing
 const saltRounds = 10;
 
+// Start the server
 app.listen(3002, () => {
   console.log("Server is running on port 3002");
 });
 
+// Connect to MongoDB
 async function connectToMongo() {
   try {
     await client.connect();
@@ -52,12 +62,14 @@ async function connectToMongo() {
 
 connectToMongo();
 
+// Endpoint for user registration
 app.post("/register", async (req, res) => {
   const sentEmail = req.body.Email;
   const sentUsername = req.body.UserName;
   const sentPassword = req.body.Password;
 
   try {
+    // Check if email or username already exists
     const existingUser = await client
       .db("portfolio_login_db")
       .collection("users")
@@ -68,16 +80,27 @@ app.post("/register", async (req, res) => {
     if (existingUser) {
       res.send({ message: "Email or username is already registered" });
     } else {
+      // Generate verification token and send verification email
+      const verificationToken = jwt.sign(
+        { email: sentEmail },
+        "your_verification_secret",
+        { expiresIn: "1d" }
+      );
+      sendVerificationEmail(sentEmail, verificationToken);
+
+      // Hash the password before saving
       const hash = await bcrypt.hash(sentPassword, saltRounds);
       const newUser = {
         email: sentEmail,
         username: sentUsername,
         password: hash,
+        verified: false,
         riskA: 0,
         riskB: 0,
         createdAt: new Date(),
       };
 
+      // Insert new user into the database
       await client
         .db("portfolio_login_db")
         .collection("users")
@@ -91,39 +114,101 @@ app.post("/register", async (req, res) => {
   }
 });
 
+// Function to send verification email
+function sendVerificationEmail(email, token) {
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: true,
+    service: "gmail",
+    auth: {
+      user: "nsnsbahja@gmail.com",
+      pass: "zvrk wgna cdnn mgdg",
+    },
+  });
+
+  const mailOptions = {
+    from: "nsnsbahja@gmail.com",
+    to: email,
+    subject: "Email Verification",
+    html: `<p>Click <a href="http://localhost:3000/verify/${token}">here</a> to verify your email address.</p>`,
+  };
+
+  // Send the email
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.log("Error sending verification email:", error);
+    } else {
+      console.log("Verification email sent:", info.response);
+    }
+  });
+}
+
+// Endpoint for verifying email
+app.get("/verify/:token", (req, res) => {
+  const token = req.params.token;
+
+  try {
+    // Verify the token
+    const decoded = jwt.verify(token, "your_verification_secret");
+    const email = decoded.email;
+
+    // Update user's verification status
+    client
+      .db("portfolio_login_db")
+      .collection("users")
+      .updateOne({ email: email }, { $set: { verified: true } }, (err) => {
+        if (err) {
+          res.status(500).json({ message: "Error verifying email" });
+        } else {
+          res.redirect("/verified");
+        }
+      });
+  } catch (error) {
+    res.status(400).json({ message: "Invalid token" });
+  }
+});
+
+// Endpoint for user login
 app.post("/login", async (req, res) => {
   const sentLoginUsername = req.body.LoginUserName;
   const setLoginPassword = req.body.LoginPassword;
 
   try {
+    // Find user by username
     const user = await client
       .db("portfolio_login_db")
       .collection("users")
       .findOne({ username: sentLoginUsername });
 
-    if (user) {
+    if (user && user.verified) {
+      // Compare passwords
       const match = await bcrypt.compare(setLoginPassword, user.password);
 
       if (match) {
+        // Set session variable
         req.session.LoginUserName = user.username;
         console.log(req.session.LoginUserName);
 
+        // Send response
         res.send({
           results: user,
           username: user.username,
           isLoggedIn: true,
+          isVerified: user.verified,
         });
       } else {
         res.send({ message: "Credentials error", isLoggedIn: false });
       }
     } else {
-      res.send({ message: "Credentials error", isLoggedIn: false });
+      res.send({ message: "User not verified", isLoggedIn: false });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
+// Endpoint to check if user is logged in
 app.get("/", (req, res) => {
   if (req.session && req.session.LoginUserName) {
     res.send({ valid: true, username: req.session.LoginUserName });
@@ -132,6 +217,7 @@ app.get("/", (req, res) => {
   }
 });
 
+// Endpoint for user logout
 app.get("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -144,10 +230,12 @@ app.get("/logout", (req, res) => {
   });
 });
 
+// Endpoint to save user's risk values
 app.post("/save-risk", async (req, res) => {
   const { username, riskValueA, riskValueB } = req.body;
 
   try {
+    // Update user's risk values
     await client
       .db("portfolio_login_db")
       .collection("users")
@@ -163,10 +251,12 @@ app.post("/save-risk", async (req, res) => {
   }
 });
 
+// Endpoint to get user's risk values
 app.post("/get-risk", async (req, res) => {
   const { username } = req.body;
 
   try {
+    // Find user by username and send risk values
     const user = await client
       .db("portfolio_login_db")
       .collection("users")
@@ -185,18 +275,22 @@ app.post("/get-risk", async (req, res) => {
   }
 });
 
+// Route for saving an asset to a user's account
 app.post("/save-asset", async (req, res) => {
   const { username, assetSymbol } = req.body;
 
   try {
+    // Find the user in the database
     const user = await client
       .db("portfolio_login_db")
       .collection("users")
       .findOne({ username: username });
 
+    // Check if the asset is already saved for the user
     if (user && user.savedAssets && user.savedAssets.includes(assetSymbol)) {
       res.status(400).json({ message: "Asset is already saved." });
     } else {
+      // Update the user's saved assets
       await client
         .db("portfolio_login_db")
         .collection("users")
@@ -214,15 +308,18 @@ app.post("/save-asset", async (req, res) => {
   }
 });
 
+// Route for fetching saved assets for a user
 app.get("/saved-assets/:username", async (req, res) => {
   const { username } = req.params;
 
   try {
+    // Find the user in the database
     const user = await client
       .db("portfolio_login_db")
       .collection("users")
       .findOne({ username: username });
 
+    // Check if the user exists and has saved assets
     if (user && user.savedAssets) {
       res.status(200).json({ savedAssets: user.savedAssets });
     } else {
@@ -234,31 +331,37 @@ app.get("/saved-assets/:username", async (req, res) => {
   }
 });
 
+// Route for saving portfolio data to a user's account
 app.post("/save-data-portfolio", async (req, res) => {
   const { username, savedData } = req.body;
-  const subArraySize = 3;
+  const subArraySize = 3; // Maximum sub-array size
 
   try {
+    // Retrieve user data from the database
     const userData = await client
       .db("portfolio_login_db")
       .collection("users")
       .findOne({ username: username });
 
+    // If user does not exist, return error
     if (!userData) {
       res.status(404).json({ error: "User not found" });
       return;
     }
 
+    // Check if maximum sub-array size for portfolios is reached
     if (userData.Portfolios && userData.Portfolios.length >= subArraySize) {
       console.log("Maximum sub-array size reached");
       res.sendStatus(204);
       return;
     }
 
+    // Calculate remaining slots for portfolio data
     const remainingSlots =
       subArraySize - (userData.Portfolios ? userData.Portfolios.length : 0);
     const dataToPush = savedData.slice(0, remainingSlots);
 
+    // Update the user's portfolio data
     const updateResult = await client
       .db("portfolio_login_db")
       .collection("users")
@@ -271,6 +374,7 @@ app.post("/save-data-portfolio", async (req, res) => {
         }
       );
 
+    // Check if portfolio data was updated successfully
     if (updateResult.modifiedCount > 0) {
       console.log("Portfolio data updated successfully");
       res.sendStatus(200);
@@ -283,15 +387,18 @@ app.post("/save-data-portfolio", async (req, res) => {
   }
 });
 
+// Route for fetching portfolio data for a user
 app.post("/get-portfolio-data", async (req, res) => {
   const { username } = req.body;
 
   try {
+    // Find the user in the database
     const user = await client
       .db("portfolio_login_db")
       .collection("users")
       .findOne({ username: username });
 
+    // If user exists and has portfolio data, return it
     if (user && user.Portfolios) {
       console.log("Portfolio data fetched successfully");
       res.status(200).json({ portfolioData: user.Portfolios });
@@ -302,6 +409,7 @@ app.post("/get-portfolio-data", async (req, res) => {
   }
 });
 
+// Route for saving profile data to a user's account
 app.post("/save-data-profile", async (req, res) => {
   const {
     username,
@@ -309,6 +417,7 @@ app.post("/save-data-profile", async (req, res) => {
   } = req.body;
 
   try {
+    // Update or create user profile in the database
     const result = await client
       .db("portfolio_login_db")
       .collection("users")
@@ -336,16 +445,18 @@ app.post("/save-data-profile", async (req, res) => {
   }
 });
 
+// Route for fetching profile data for a user
 app.post("/get-profile-data", async (req, res) => {
   const { username } = req.body;
-  console.log(username);
 
   try {
+    // Find the user in the database
     const user = await client
       .db("portfolio_login_db")
       .collection("users")
       .findOne({ username: username });
 
+    // If user exists, return their data
     if (user) {
       console.log("User data fetched successfully:", user);
       res.status(200).json(user);
@@ -356,5 +467,117 @@ app.post("/get-profile-data", async (req, res) => {
   } catch (error) {
     console.error("Error fetching user data:", error.message);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Route for uploading profile picture for a user
+app.post(
+  "/upload-profile-picture",
+  multer({
+    storage: multer.diskStorage({
+      destination: function (req, file, cb) {
+        const username = req.body.username || "unknown";
+        const userUploadsDirectory = `uploads/${username}`;
+        fs.mkdirSync(userUploadsDirectory, { recursive: true });
+        cb(null, userUploadsDirectory);
+      },
+      filename: function (req, file, cb) {
+        cb(null, file.originalname);
+      },
+    }),
+  }).single("profilePicture"),
+  async (req, res) => {
+    const username = req.body.username;
+    const profilePicture = req.file;
+
+    try {
+      // Check if profile picture is uploaded
+      if (!profilePicture) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      const userUploadsDirectory = `uploads/${username}`;
+
+      const profilePicturePath = path.join(
+        userUploadsDirectory,
+        profilePicture.originalname
+      );
+
+      // Update user's profile picture path in the database
+      await client
+        .db("portfolio_login_db")
+        .collection("users")
+        .updateOne(
+          { username: username },
+          { $set: { profilePicture: profilePicturePath } }
+        );
+
+      res
+        .status(200)
+        .json({ message: "Profile picture uploaded successfully" });
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// Route for changing user password
+app.post("/change-password", async (req, res) => {
+  const { username, newPassword } = req.body;
+
+  try {
+    // Find the user in the database
+    const user = await client
+      .db("portfolio_login_db")
+      .collection("users")
+      .findOne({ username });
+
+    // If user does not exist, return error
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update user's password in the database
+    await client
+      .db("portfolio_login_db")
+      .collection("users")
+      .updateOne({ username }, { $set: { password: hashedPassword } });
+
+    return res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Route for changing user username
+app.post("/change-username", async (req, res) => {
+  const { username, newUsername } = req.body;
+
+  try {
+    // Find the user in the database
+    const user = await client
+      .db("portfolio_login_db")
+      .collection("users")
+      .findOne({ username });
+
+    // If user does not exist, return error
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update user's username in the database
+    await client
+      .db("portfolio_login_db")
+      .collection("users")
+      .updateOne({ username }, { $set: { username: newUsername } });
+
+    return res.status(200).json({ message: "Username changed successfully" });
+  } catch (error) {
+    console.error("Error changing username:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
