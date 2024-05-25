@@ -1,8 +1,3 @@
-html,
-body {
-  overflow: hidden;
-}
-
 .dashboard {
   font-family: "Gill Sans", sans-serif;
 }
@@ -74,10 +69,11 @@ body {
 .dashboard .container-middle {
   position: absolute;
   left: 19%;
-  top: 125px;
+  top: 120px;
   border-style: solid;
   width: 75%;
   height: 741px;
+  overflow: auto;
 }
 
 .dashboard .second-container-text:hover {
@@ -97,4 +93,195 @@ body {
 
 .dashboard .active {
   background-color: rgb(161, 161, 161);
+}
+
+.dashboard .disabledButton {
+  background-color: gray;
+}
+
+.dashboard .controls button {
+  background-color: #f5f5f5;
+  border: 1px solid #d3d3d3;
+  padding: 0.5em 1em;
+  margin-left: 15em;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.dashboard .controls button:hover {
+  background-color: #eaeaea;
+}
+
+.dashboard .select-assets-content,
+.start-date-content,
+.end-date-content,
+.interval-content {
+  margin-top: 1em;
+  padding: 1em;
+  border: 1px solid #d3d3d3;
+  border-radius: 4px;
+}
+
+.dashboard .suggestion-dropdown ul {
+  position: absolute;
+  background: white;
+  list-style-type: none;
+  width: 25%;
+  padding: 0;
+  margin: 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ccc;
+  z-index: 1000;
+}
+
+.dashboard .suggestion-dropdown li {
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.dashboard .suggestion-dropdown li:hover {
+  background-color: #8b8b8b;
+}
+
+.dashboard .chart-container {
+  position: relative;
+  height: 100%;
+}
+
+.dashboard .select-assets-content,
+.dashboard .start-date-content,
+.dashboard .end-date-content,
+.dashboard .interval-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: none;
+  width: 100%;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  background-color: #ffffff;
+  width: 97.5%;
+  border-color: black;
+  height: 70%;
+}
+
+.dashboard .visible {
+  display: block;
+}
+
+.dashboard .monte-carlo-chart {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.dashboard .chart-container-monte-carlo {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: white;
+  flex: 1;
+  max-width: 699px;
+}
+
+.dashboard .clicked-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 29px;
+  margin-left: 5px;
+}
+
+.dashboard .clicked-info-card {
+  border: 1px solid #d3d3d3;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  font-family: "Gill Sans", sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dashboard .clicked-info-card h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.dashboard .clicked-info-card p,
+.dashboard .clicked-info-card ul {
+  margin: 0;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.dashboard .clicked-info-card ul {
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.dashboard .clicked-info-card .portfolio-components {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dashboard .clicked-info-card .portfolio-component {
+  background-color: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.dashboard .clicked-info-card .portfolio-components-wrapper {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.dashboard .clicked-info-card .button-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dashboard .btn {
+  background-color: #f0f0f0;
+  border: 1px solid #d3d3d3;
+  padding: 7px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.dashboard .btn:hover {
+  background-color: #e0e0e0;
+}
+
+.dashboard .btn-back-container {
+  margin-left: 20px;
+}
+
+.dashboard .return-chart {
+  width: 95%;
+}
+
+.dashboard .btn.next {
+  margin-left: 1230px;
+}
+
+.dashboard .btn.clear {
+  margin-left: 25px;
+}
+
+.dashboard .start-date-content,
+.end-date-content {
+  display: none;
+}
+
+.dashboard .visible {
+  display: block;
 }

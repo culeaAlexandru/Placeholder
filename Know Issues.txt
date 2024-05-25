@@ -1,12 +1,9 @@
-1. The search asset searches if the name has at least one element in the name and gives it
-2. The rezolution of the pages are not flexible(eg. The elements in the Home-page are visible only on 1920x1080)
-4. You have to restart the Watchlist page to see your Saved Assets
-5. You have to restart the Profile page to see your Profile datas
-6. In  the VS Code, a warning is present for the Watchlist page.
-7. After editing some of the information in Profile, if you already had information and you did not edit it, the information will be shown twice.
-8. If you search for an asset already saved in the data-base, it will get an error in Watchlist page
-9. No warning that you can't save more than 3 assets
-10. The dates are pre-defined for the API.
-
-
+1. The rezolution of the pages are not flexible(eg. The elements in the Home-page are visible only on 1920x1080)
+2. Multiple console.logs are present in the front-end (Dashboard, Home, Invest, Portfolios, Profile, Register, Watchlist) and back-end (app.listen, connectToMonge, register, login, save-risk, get-risk, save-asset, save-data-portfolio x3, save-data-profile x2, get-profile-data x2)
+3. Save asset should appear only after finishing the search in Watchlist page.
+4. Missing Search again button in Watchlist page.
+5. Wrapper pressing outside triggeres both wrappers in the first chart in Invest page.
+6. Missing Save functionality
+7. The suggestions need a 3 seconds delay
+8. Terminal pause after refreshing the Invest page.
 

@@ -1,7 +1,6 @@
 .home-page {
   font-family: "Gill Sans", sans-serif;
 }
-
 .home-page .header {
   background-color: #d1e1fd;
   display: flex;
@@ -75,11 +74,10 @@
 }
 
 .slider-container {
-  position: absolute;
   flex: 1;
   width: 300px;
   padding-left: 100px;
-  margin-top: 350px;
+  margin-top: 374px;
 }
 
 .slider-container #slider-value {
@@ -101,9 +99,9 @@
     0.15s scale ease-in-out;
 }
 
-.chart {
-  padding-left: 1050px;
-  padding-top: 200px;
+.right-container {
+  margin-left: 600px;
+  margin-bottom: 500px;
 }
 
 .home-page .data-container {
@@ -127,10 +125,4 @@
   position: fixed;
   top: 450px;
   left: 105px;
-}
-
-.continue-button {
-  position: fixed;
-  top: 413px;
-  left: 450px;
 }

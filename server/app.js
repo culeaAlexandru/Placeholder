@@ -6,9 +6,7 @@ const bcrypt = require("bcrypt");
 const session = require("express-session");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const PortfolioAllocation = require("portfolio-allocation");
 
 // Middleware setup
 app.use(express.json());
@@ -470,57 +468,6 @@ app.post("/get-profile-data", async (req, res) => {
   }
 });
 
-// Route for uploading profile picture for a user
-app.post(
-  "/upload-profile-picture",
-  multer({
-    storage: multer.diskStorage({
-      destination: function (req, file, cb) {
-        const username = req.body.username || "unknown";
-        const userUploadsDirectory = `uploads/${username}`;
-        fs.mkdirSync(userUploadsDirectory, { recursive: true });
-        cb(null, userUploadsDirectory);
-      },
-      filename: function (req, file, cb) {
-        cb(null, file.originalname);
-      },
-    }),
-  }).single("profilePicture"),
-  async (req, res) => {
-    const username = req.body.username;
-    const profilePicture = req.file;
-
-    try {
-      // Check if profile picture is uploaded
-      if (!profilePicture) {
-        return res.status(400).json({ message: "No file uploaded" });
-      }
-      const userUploadsDirectory = `uploads/${username}`;
-
-      const profilePicturePath = path.join(
-        userUploadsDirectory,
-        profilePicture.originalname
-      );
-
-      // Update user's profile picture path in the database
-      await client
-        .db("portfolio_login_db")
-        .collection("users")
-        .updateOne(
-          { username: username },
-          { $set: { profilePicture: profilePicturePath } }
-        );
-
-      res
-        .status(200)
-        .json({ message: "Profile picture uploaded successfully" });
-    } catch (error) {
-      console.error("Error uploading profile picture:", error);
-      res.status(500).json({ error: error.message });
-    }
-  }
-);
-
 // Route for changing user password
 app.post("/change-password", async (req, res) => {
   const { username, newPassword } = req.body;
@@ -549,35 +496,6 @@ app.post("/change-password", async (req, res) => {
     return res.status(200).json({ message: "Password changed successfully" });
   } catch (error) {
     console.error("Error changing password:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-// Route for changing user username
-app.post("/change-username", async (req, res) => {
-  const { username, newUsername } = req.body;
-
-  try {
-    // Find the user in the database
-    const user = await client
-      .db("portfolio_login_db")
-      .collection("users")
-      .findOne({ username });
-
-    // If user does not exist, return error
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Update user's username in the database
-    await client
-      .db("portfolio_login_db")
-      .collection("users")
-      .updateOne({ username }, { $set: { username: newUsername } });
-
-    return res.status(200).json({ message: "Username changed successfully" });
-  } catch (error) {
-    console.error("Error changing username:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 });
