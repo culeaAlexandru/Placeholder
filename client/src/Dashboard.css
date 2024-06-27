@@ -759,7 +759,7 @@ body {
 }
 
 .welcome-content {
-  margin-top: 180px;
+  margin-top: 130px;
 }
 
 .ci-photo {
@@ -1228,4 +1228,37 @@ body {
 .reset-btn {
   margin-right: 150px;
   margin-left: 150px;
+}
+
+.modal-content-cards {
+  position: relative;
+  z-index: 10;
+}
+
+.modal-container-cards {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-cards {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.modal-cards .overlay-cards {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }

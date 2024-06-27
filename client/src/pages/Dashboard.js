@@ -118,74 +118,138 @@ export default function Dashboard() {
   const cardContents = {
     Invest: (
       <div>
+        <p>This guide will help you use the Invest page:</p>
+        <ol>
+          <li>
+            <strong>Select Assets:</strong> Choose 2-4 assets by typing the name
+            or symbol. Click suggestions to select.
+          </li>
+          <li>
+            <strong>Manage Search Bars:</strong> Add (+) or remove (-) search
+            bars. Click 'X' to remove an asset.
+          </li>
+          <li>
+            <strong>Set Investment Period:</strong> Choose start and end dates
+            for your investment.
+          </li>
+          <li>
+            <strong>Select Data Interval:</strong> Choose data intervals like
+            Daily or Hourly.
+          </li>
+          <li>
+            <strong>Review and Confirm:</strong> Review your selections. A line
+            chart will show the historical data.
+          </li>
+          <li>
+            <strong>Monte Carlo Simulation:</strong> View simulation results and
+            detailed metrics for portfolios.
+          </li>
+        </ol>
         <p>
-          In the Invest page you can calculate your outcome based on the balance
-          that you have, the risk that you want to take and the timeframe
-          defined by you.
+          You can save, delete, or buy portfolios based on simulation results.
         </p>
-        <p>
-          If you chose to calculate based on only one asset, you can see the
-          expected result without having to calculate one more asset.
-        </p>
-        <p>
-          If you chose to calculate based on more than one asset, you can see
-          the expected result of all the assets you chose in the same time.
-        </p>
-        <p>You can save the whole portfolio.</p>
       </div>
     ),
     Watchlist: (
       <div>
-        <p>In the Watchlist page you can search for any asset you want.</p>
-        <p>
-          You can also add assets to the watchlist and remove them from the
-          watchlist.
-        </p>
-        <p>
-          You can also see the history of the asset based on your timeframe.
-        </p>
+        <p>This guide will help you use the Watchlist page:</p>
+        <ol>
+          <li>
+            <strong>Search for Assets:</strong> Type the name or symbol of an
+            asset. Suggestions will appear as you type. Click a suggestion to
+            select it.
+          </li>
+          <li>
+            <strong>Select Dates:</strong> Choose start and end dates for
+            viewing historical data.
+          </li>
+          <li>
+            <strong>Select Interval:</strong> Choose a data interval (e.g.,
+            Daily, Hourly).
+          </li>
+          <li>
+            <strong>Save Assets:</strong> Save assets to your watchlist for easy
+            access later.
+          </li>
+          <li>
+            <strong>View Saved Assets:</strong> View and manage assets you've
+            saved to your watchlist.
+          </li>
+          <li>
+            <strong>Toggle Data View:</strong> Switch between historical data
+            and returns using the toggle switch.
+          </li>
+        </ol>
       </div>
     ),
     Portfolios: (
       <div>
-        <p>
-          In the Portfolios page you can see the portfolios saved from the
-          Invest page.
-        </p>
-        <p>You can also download the portfolios locally.</p>
+        <p>This guide will help you use the Portfolios page:</p>
+        <ol>
+          <li>
+            <strong>View Portfolios:</strong> Access your saved portfolios,
+            including details like asset names, percentages, expected return,
+            and risk.
+          </li>
+          <li>
+            <strong>Check and Update:</strong> Check the current performance of
+            a portfolio and update its metrics.
+          </li>
+          <li>
+            <strong>Download PDF:</strong> Generate and download a PDF report of
+            your portfolio.
+          </li>
+          <li>
+            <strong>Delete Portfolios:</strong> Remove portfolios you no longer
+            need.
+          </li>
+        </ol>
       </div>
     ),
     Profile: (
       <div>
-        <p>
-          In the Profile page you can see the information of the user that you
-          are logged in.
-        </p>
-        <p>
-          You can also edit the information of the user that you are logged in.
-        </p>
-        <p>
-          You can also change the password of the user that you are logged in.
-        </p>
-        <p>
-          You can also change the profile picture of the user that you are
-          logged in.
-        </p>
+        <p>This guide will help you use the Profile page:</p>
+        <ol>
+          <li>
+            <strong>View Profile:</strong> See your first name, last name,
+            country, and pronoun.
+          </li>
+          <li>
+            <strong>Edit Profile:</strong> Click "Edit" to modify your profile
+            details and save changes.
+          </li>
+          <li>
+            <strong>Change Password:</strong> Click "Change Password" to update
+            your password.
+          </li>
+          <li>
+            <strong>Log Out:</strong> Use the log out option to securely exit
+            your account.
+          </li>
+        </ol>
       </div>
     ),
     "Other features": (
       <div>
+        <h3>Other Features</h3>
         <p>
-          You can log out from any page of the dashboard by clicking log out.
+          This guide will help you use additional features of the dashboard:
         </p>
-        <p>
-          You can see the username and the profile picture in the top right
-          corner.
-        </p>
-        <p>
-          You can go back to the homepage by pressing the name of the page from
-          any dashboard page.
-        </p>
+        <ol>
+          <li>
+            <strong>Log Out:</strong> You can log out from any page of the
+            dashboard by clicking the "Log out" button in the sidebar.
+          </li>
+          <li>
+            <strong>Profile Information:</strong> Your username and profile
+            picture are displayed in the top right corner of the dashboard.
+          </li>
+          <li>
+            <strong>Homepage Navigation:</strong> Click on the name of the page
+            (e.g., "Placeholder") at the top of the dashboard to go back to the
+            homepage.
+          </li>
+        </ol>
       </div>
     ),
   };

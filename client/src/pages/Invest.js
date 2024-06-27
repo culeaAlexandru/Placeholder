@@ -85,10 +85,6 @@ export default function DashboardInvest() {
   const [efficientFrontierData, setEfficientFrontierData] = useState([]);
   const [riskFreeRate, setRiskFreeRate] = useState(null);
   const [clickedInfos, setClickedInfos] = useState([]);
-  // const [lastValidSearchResultA, setLastValidSearchResultA] = useState(null);
-  // const [lastValidSearchResultB, setLastValidSearchResultB] = useState(null);
-  // const [lastValidSearchResultC, setLastValidSearchResultC] = useState(null);
-  // const [lastValidSearchResultD, setLastValidSearchResultD] = useState(null);
   const [dataFetched, setDataFetched] = useState(false);
   const [step, setStep] = useState(0);
   const [assetDataAvailability, setAssetDataAvailability] = useState({
