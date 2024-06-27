@@ -1,9 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import portrait from "../imgs/default-pp.jpg";
 import axios from "axios";
 import "../Dashboard.css";
 import { Link, useNavigate } from "react-router-dom";
 import Chart from "chart.js/auto";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import Toggle from "react-toggle";
+import "react-toggle/style.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faHome,
+  faChartLine,
+  faEye,
+  faFolder,
+  faUser,
+  faSignOutAlt,
+  faCalendarAlt,
+  faSearch,
+  faExclamationTriangle,
+} from "@fortawesome/free-solid-svg-icons";
 
 export default function DashboardWatchlist() {
   const [isLoggedIn, setIsLoggedIn] = useState();
@@ -11,7 +27,6 @@ export default function DashboardWatchlist() {
   const [username, setUsername] = useState("");
   const [data, setData] = useState(null);
   const navigate = useNavigate();
-  const [chartInstance, setChartInstance] = useState(null);
   const [assetSymbol, setAssetSymbol] = useState("");
   const [searchState, setSearchState] = useState({
     companyName: "",
@@ -19,17 +34,22 @@ export default function DashboardWatchlist() {
     suggestions: [],
   });
   const [searchResult, setSearchResult] = useState(null);
+  const searchBarRef = useRef(null);
+  const [showInput, setShowInput] = useState(true);
   const [savedAssets, setSavedAssets] = useState([]);
   const [warning, setWarning] = useState("");
-  const fromDate = "2023-03-23";
-  const toDate = "2024-03-23";
+  const [displayType, setDisplayType] = useState(
+    localStorage.getItem("displayType") || "returns"
+  );
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [interval, setInterval] = useState("Interval");
   const apiKey = "SbUhzMlpiU94dp9UtJGKlPs59R6DBpGi";
   const searchApiUrl = `https://financialmodelingprep.com/api/v3/stock/list?apikey=${apiKey}`;
-  const [searchWarning, setSearchWarning] = useState(
-    "Please search for an asset"
-  );
 
-  // Effect hook to check login status on component mount
+  const chartRef = useRef(null);
+  const chartInstanceRef = useRef(null);
+
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -47,19 +67,16 @@ export default function DashboardWatchlist() {
     checkLoginStatus();
   }, []);
 
-  // Effect hook to navigate to login page if user is not logged in
   useEffect(() => {
     if (isLoggedIn === false) {
       navigate("/login");
     }
   }, [isLoggedIn, navigate]);
 
-  // Function to toggle modal visibility
   const toggleModal = () => {
     setModal(!modal);
   };
 
-  // Effect hook to add/remove class on body based on modal visibility
   useEffect(() => {
     if (modal) {
       document.body.classList.add("active-modal");
@@ -68,7 +85,6 @@ export default function DashboardWatchlist() {
     }
   }, [modal]);
 
-  // Function to handle user logout
   const handleLogout = async () => {
     try {
       await axios.get("http://localhost:3002/logout", {
@@ -82,88 +98,96 @@ export default function DashboardWatchlist() {
     }
   };
 
-  // Effect hook to fetch search results when searchState changes
+  const updateChartData = useCallback(
+    (symbol) => {
+      if (!symbol || !startDate || !endDate || !interval) {
+        return;
+      }
+
+      const fetchInterval = interval === "Daily" ? "4hour" : interval;
+      const newApiUrl = `https://financialmodelingprep.com/api/v3/historical-chart/${fetchInterval}/${symbol}?apikey=${apiKey}`;
+
+      fetch(newApiUrl)
+        .then((response) => response.json())
+        .then((data) => {
+          const filteredData = data.filter((item) => {
+            const date = new Date(item.date);
+            return date >= startDate && date <= endDate;
+          });
+          setData(filteredData);
+          if (filteredData.length === 0) {
+            setWarning("Asset has no data");
+          } else {
+            setWarning("");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    },
+    [interval, startDate, endDate, apiKey]
+  );
   useEffect(() => {
-    if (!searchState.hasSearched || !searchState.companyName) return;
+    if (searchState.hasSearched && searchState.companyName) {
+      fetch(searchApiUrl)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          if (!data) {
+            console.error("Error: Data is null");
+            return;
+          }
 
-    fetch(searchApiUrl)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        if (!data) {
-          console.error("Error: Data is null");
-          setSearchResult(null);
-          return;
-        }
+          const foundItems = data.filter((item) => {
+            return (
+              item.name &&
+              item.name.toLowerCase() === searchState.companyName.toLowerCase()
+            );
+          });
 
-        const foundItems = data.filter((item) => {
-          return (
-            item.name &&
-            item.name.toLowerCase() === searchState.companyName.toLowerCase()
-          );
+          setAssetSymbol(foundItems.length > 0 ? foundItems[0].symbol : "");
+          setSearchState({
+            ...searchState,
+            hasSearched: false,
+          });
+        })
+        .catch((error) => {
+          console.error("Error fetching data:", error);
         });
-
-        setSearchResult(foundItems);
-        setAssetSymbol(foundItems.length > 0 ? foundItems[0].symbol : "");
-        setSearchState({
-          ...searchState,
-          hasSearched: false,
-        });
-        if (foundItems.length > 0) {
-          updateChartData(foundItems[0].symbol);
-        }
-        setSearchWarning("");
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-        setSearchResult(null);
-      });
+    }
   }, [searchApiUrl, searchState]);
 
-  // Function to update chart data based on selected asset symbol
-  const updateChartData = (symbol) => {
-    const newApiUrl = `https://financialmodelingprep.com/api/v3/historical-chart/4hour/${symbol}?from=${fromDate}&to=${toDate}&apikey=${apiKey}`;
-
-    fetch(newApiUrl)
-      .then((response) => response.json())
-      .then((data) => {
-        const filteredData = data.filter((item) => {
-          const date = new Date(item.date);
-          return date;
-        });
-        setData(filteredData);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
-  };
-
-  // Effect hook to draw chart when data changes
   useEffect(() => {
-    if (data) {
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
-      drawChart();
+    if (assetSymbol && startDate && endDate && interval) {
+      updateChartData(assetSymbol);
     }
-    // eslint-disable-next-line
-  }, [data]);
+  }, [assetSymbol, startDate, endDate, interval, updateChartData]);
 
-  // Function to draw chart using Chart.js
-  const drawChart = () => {
-    const ctx = document.getElementById("myChart").getContext("2d");
+  const drawChart = useCallback(() => {
+    const ctx = chartRef.current.getContext("2d");
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.destroy();
+    }
     const newChartInstance = new Chart(ctx, {
       type: "line",
       data: {
-        labels: data.map((item) => new Date(item.date).toLocaleDateString()),
+        labels: data
+          ? data
+              .map((item) => new Date(item.date).toLocaleDateString())
+              .reverse() // Reverse the date labels
+          : [],
         datasets: [
           {
-            label: "Close Value",
-            data: data.map((item) => item.close),
+            label: displayType === "returns" ? "Returns" : "Close Value",
+            data: data
+              ? displayType === "returns"
+                ? calculateReturns(data.map((item) => item.close))
+                : data.map((item) => item.close)
+              : [],
             borderColor: "rgba(255, 99, 132, 1)",
             borderWidth: 1,
           },
@@ -193,20 +217,80 @@ export default function DashboardWatchlist() {
         },
       },
     });
-    setChartInstance(newChartInstance);
+    chartInstanceRef.current = newChartInstance;
+  }, [data, displayType]);
+
+  useEffect(() => {
+    // Initialize the chart with empty data
+    const ctx = chartRef.current.getContext("2d");
+    const initialChartInstance = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "No data",
+            data: [],
+            borderColor: "rgba(255, 99, 132, 1)",
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: false,
+            ticks: {
+              font: {
+                size: 12,
+              },
+            },
+          },
+          x: {
+            display: true,
+            ticks: {
+              font: {
+                size: 12,
+              },
+            },
+            grid: {
+              display: false,
+            },
+          },
+        },
+      },
+    });
+    chartInstanceRef.current = initialChartInstance;
+
+    return () => {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (data) {
+      drawChart();
+    }
+  }, [data, displayType, drawChart]);
+
+  const calculateReturns = (data) => {
+    if (data.length < 2) return [];
+    const returns = data.slice(1).map((currentClose, index) => {
+      const previousClose = data[index];
+      return ((currentClose - previousClose) / previousClose) * 100;
+    });
+    return returns;
   };
 
-  // Function to handle saving asset
   const handleSaveAsset = () => {
-    console.log(data);
     if (
       !data ||
       data.length === 0 ||
-      !data[data.length - 1]?.close === undefined
+      data[data.length - 1]?.close === undefined
     ) {
-      alert(
-        " This asset has no close value or the close value is not available."
-      );
+      setWarning("Asset has no data");
       return;
     }
     axios
@@ -216,49 +300,42 @@ export default function DashboardWatchlist() {
       })
       .then((response) => {
         if (response.status === 200) {
-          alert("Asset saved successfully!");
           setSavedAssets((prevSavedAssets) => [
             ...prevSavedAssets,
             assetSymbol,
           ]);
           setWarning("");
         } else if (response.status === 400) {
-          alert("Asset is already saved.");
+          setWarning("Asset is already saved.");
         } else {
-          alert("Failed to save asset.");
+          setWarning("Failed to save asset.");
         }
       })
       .catch((error) => {
         console.error("Error saving asset:", error);
-        alert("An error occurred while saving the asset.");
+        setWarning("An error occurred while saving the asset.");
       });
   };
 
-  // Effect hook to fetch saved assets on component mount
   useEffect(() => {
-    if (username.length > 0 && savedAssets === 0) {
-      setWarning("No assets were saved");
-    } else if (username.length > 0 && warning === "") {
+    if (username.length > 0) {
       axios
         .get(`http://localhost:3002/saved-assets/${username}`)
         .then((response) => {
-          setSavedAssets(response.data.savedAssets);
+          const assets = response.data.savedAssets;
+          setSavedAssets(assets);
+          if (assets.length === 0) {
+            setWarning("No assets were saved");
+          } else {
+            setWarning("");
+          }
         })
         .catch((error) => {
           console.error("Error fetching saved assets:", error);
         });
     }
-  }, [username, savedAssets, warning]);
+  }, [username]);
 
-  // Function to handle search
-  const handleSearch = () => {
-    setSearchState({
-      ...searchState,
-      hasSearched: true,
-    });
-  };
-
-  // Function to handle search input change
   const handleInputChange = (e) => {
     const input = e.target.value;
     setSearchState((prevState) => ({
@@ -274,6 +351,10 @@ export default function DashboardWatchlist() {
       return;
     }
 
+    fetchSuggestions(input);
+  };
+
+  const fetchSuggestions = (input) => {
     fetch(
       `https://financialmodelingprep.com/api/v3/search?query=${input}&limit=5&apikey=${apiKey}`
     )
@@ -338,177 +419,306 @@ export default function DashboardWatchlist() {
       });
   };
 
-  // Function to handle button click for an asset
+  const handleInputFocus = () => {
+    if (searchState.companyName.trim() !== "") {
+      fetchSuggestions(searchState.companyName);
+    }
+  };
+
   const handleAssetButtonClick = (assetSymbol) => {
-    console.log("Button clicked for asset:", assetSymbol);
     setAssetSymbol(assetSymbol);
-    updateChartData(assetSymbol);
   };
 
-  // Function to handle click on search result
-  const handleSearchResultClick = (symbol) => {
-    setAssetSymbol(symbol);
-    updateChartData(symbol);
-  };
-
-  // Function to handle suggestion click
-  const handleSuggestionClick = (name) => {
+  const handleSuggestionClick = (name, symbol) => {
+    setSearchResult([{ name, symbol }]);
     setSearchState({
       ...searchState,
-      companyName: name,
+      companyName: "",
       suggestions: [],
     });
+    setShowInput(false);
+    setAssetSymbol(symbol);
+  };
+
+  const handleToggleChange = () => {
+    const newDisplayType =
+      displayType === "historical" ? "returns" : "historical";
+    setDisplayType(newDisplayType);
+    localStorage.setItem("displayType", newDisplayType);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        searchBarRef.current &&
+        !searchBarRef.current.contains(event.target)
+      ) {
+        setSearchState((prevState) => ({
+          ...prevState,
+          suggestions: [],
+        }));
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [searchBarRef]);
+
+  const handleDeleteAsset = (assetSymbol) => {
+    axios
+      .post("http://localhost:3002/delete-saved-asset", {
+        username: username,
+        assetSymbol: assetSymbol,
+      })
+      .then((response) => {
+        if (response.status === 200) {
+          setSavedAssets((prevSavedAssets) =>
+            prevSavedAssets.filter((asset) => asset !== assetSymbol)
+          );
+        } else {
+          setWarning("Failed to delete asset.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting asset:", error);
+        setWarning("An error occurred while deleting the asset.");
+      });
   };
 
   return (
-    // Dashboard container
     <div className="dashboard">
-      {/* Page title */}
-      <div className="page-title">
-        <Link to="/" className="custom-link">
-          <h2>Placeholder</h2>
-        </Link>
-      </div>
-      {/* Middle container */}
-      <div className="container-middle">
-        <div>
-          {/* Search input */}
-          <input
-            type="text"
-            value={searchState.companyName}
-            onChange={handleInputChange}
-            placeholder="Enter company name"
-          />
-          {/* Search button */}
-          <button onClick={handleSearch}>Search</button>
-          {/* Display search suggestions if available */}
-          {searchState.suggestions.length > 0 && (
-            <div>
-              <h2>Search Suggestions:</h2>
-              <ul>
-                {searchState.suggestions.map((item) => (
-                  <li
-                    key={item.symbol}
-                    onClick={() =>
-                      handleSuggestionClick(item.name, item.symbol)
-                    }
-                  >
-                    <strong>Name:</strong> {item.name}
-                    <strong>Symbol:</strong> {item.symbol}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {/* Display search results if available */}
-          {searchResult && searchResult.length > 0 ? (
-            <div>
-              <h2>Search Results:</h2>
-              <ul>
-                {searchResult.map((item) => (
-                  <li
-                    key={item.symbol}
-                    onClick={() => handleSearchResultClick(item.symbol)}
-                  >
-                    <strong>Name:</strong> {item.name}
-                    <strong>Symbol:</strong> {item.symbol}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            // Display search warning if no results
-            <p>{searchWarning}</p>
-          )}
-          {/* Save Asset button */}
-          <button onClick={handleSaveAsset}>Save Asset</button>
-          {/* Display saved assets */}
-          <div>
-            <h2>Saved Assets:</h2>
-            {savedAssets.length > 0 ? (
-              <ul>
-                {savedAssets.map((assetSymbol) => (
-                  <li key={assetSymbol}>
-                    {/* Button to view saved asset data */}
-                    <button onClick={() => handleAssetButtonClick(assetSymbol)}>
-                      {assetSymbol}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              // Display warning if no saved assets
-              <p>{warning}</p>
-            )}
+      <div className="sidebar">
+        <div className="profile">
+          <img src={portrait} alt="User portrait"></img>
+          <span className="username">{username || "\u00A0"}</span>
+        </div>
+        <nav className="menu">
+          <Link to="/dashboard" className="menu-item">
+            <FontAwesomeIcon icon={faHome} className="menu-icon" /> Dashboard
+          </Link>
+          <Link to="/dashboard/invest" className="menu-item">
+            <FontAwesomeIcon icon={faChartLine} className="menu-icon" /> Invest
+          </Link>
+          <Link to="/dashboard/watchlist" className="menu-item active">
+            <FontAwesomeIcon icon={faEye} className="menu-icon" /> Watchlist
+          </Link>
+          <Link to="/dashboard/portfolios" className="menu-item">
+            <FontAwesomeIcon icon={faFolder} className="menu-icon" /> Portfolios
+          </Link>
+        </nav>
+        <div className="bottom-links">
+          <Link to="/dashboard/profile" className="menu-item">
+            <FontAwesomeIcon icon={faUser} className="menu-icon" /> Profile
+          </Link>
+          <div className="menu-item" onClick={toggleModal}>
+            <FontAwesomeIcon icon={faSignOutAlt} className="menu-icon" /> Log
+            out
           </div>
-          {/* Chart canvas */}
-          <canvas id="myChart"></canvas>
         </div>
       </div>
-      {/* Profile container */}
-      <div className="profile">
-        <div className="username">{username}</div>
-        {/* Placeholder image */}
-        <img src={portrait} alt=" "></img>
-      </div>
-      {/* Left containers */}
-      <div className="containers-left">
-        <div className="first-container">
-          {/* Link to Dashboard */}
-          <Link to="/dashboard" className="custom-link">
-            <h3 className="first-container-text">Dashboard</h3>
-          </Link>
+      <div className="main-content">
+        <div className="app-title-container">
+          <div className="app-title">
+            <Link to="/" className="custom-link">
+              <h3>Placeholder</h3>
+            </Link>
+          </div>
         </div>
-        <div className="second-container">
-          {/* Links to other sections */}
-          <Link to="/dashboard/invest" className="custom-link">
-            <h4 className="second-container-text">Invest</h4>
-          </Link>
-          <Link to="/dashboard/watchlist" className="custom-link">
-            {/* Highlighted link for Watchlist */}
-            <h4
-              className="second-container-text"
-              style={{ backgroundColor: "rgb(161, 161, 161)" }}
-            >
-              Watchlist
-            </h4>
-          </Link>
-          <Link to="/dashboard/portfolios" className="custom-link">
-            <h4 className="second-container-text">Portfolios</h4>
-          </Link>
-        </div>
-        <div className="third-container">
-          {/* Links to Profile and Logout */}
-          <Link to="/dashboard/profile" className="custom-link">
-            <h4 className="third-container-text">Profile</h4>
-          </Link>
-          {/* Logout button */}
-          <h4 className="third-container-text" onClick={toggleModal}>
-            Log out
-          </h4>
-        </div>
-        {/* Modal for logout confirmation */}
-        <div className="modal-container">
-          {modal && (
-            <div className="modal">
-              <div onClick={toggleModal} className="overlay"></div>
-              <div className="modal-content">
-                <h2>Are you sure you want to log out?</h2>
-                {/* Button to confirm logout */}
-                <Link to="/" className="custom-link">
-                  <button className="modal-yes-btn" onClick={handleLogout}>
-                    Yes
-                  </button>
-                </Link>
-                {/* Button to cancel logout */}
-                <button className="modal-no-btn" onClick={toggleModal}>
-                  No
-                </button>
+        <div className="content-watchlist">
+          <div className="input-section">
+            <div className="input-row">
+              {showInput && (
+                <div className="search-bar-watchlist" ref={searchBarRef}>
+                  <input
+                    type="text"
+                    value={searchState.companyName}
+                    onChange={handleInputChange}
+                    onFocus={handleInputFocus}
+                    placeholder="Search for an asset"
+                  />
+                  <FontAwesomeIcon
+                    icon={faSearch}
+                    className="search-icon-watchlist"
+                  />
+                  {searchState.suggestions.length > 0 && (
+                    <div className="suggestion-dropdown-watchlist">
+                      <ul>
+                        {searchState.suggestions.map((item) => (
+                          <li
+                            key={item.symbol}
+                            onClick={() =>
+                              handleSuggestionClick(item.name, item.symbol)
+                            }
+                          >
+                            {item.name} ({item.symbol})
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+              {searchResult && searchResult.length > 0 && (
+                <div className="search-results-watchlist">
+                  <ul className="search-results-list">
+                    {searchResult.map((item) => (
+                      <li
+                        key={item.symbol}
+                        className="search-result-item-watchlist"
+                      >
+                        <span className="search-result-text">
+                          {item.name} ({item.symbol})
+                        </span>
+                        {warning && (
+                          <FontAwesomeIcon
+                            icon={faExclamationTriangle}
+                            title={warning}
+                            style={{
+                              color: "red",
+                              marginLeft: "3px",
+                              marginBottom: "1px",
+                            }}
+                          />
+                        )}
+                        <button
+                          className="delete-button"
+                          onClick={() => {
+                            setShowInput(true);
+                            setSearchResult(null);
+                            setWarning("");
+                          }}
+                        >
+                          X
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="date-picker-wrapper-watchlist">
+                <DatePicker
+                  selected={startDate}
+                  onChange={(date) => setStartDate(date)}
+                  placeholderText="Select start date"
+                  maxDate={new Date()}
+                />
+                <FontAwesomeIcon
+                  icon={faCalendarAlt}
+                  className="calendar-icon-watchlist-start-date"
+                />
               </div>
             </div>
-          )}
+            <div className="input-row">
+              <div className="interval-wrapper-watchlist">
+                <select
+                  value={interval}
+                  onChange={(e) => setInterval(e.target.value)}
+                  className="interval-select"
+                >
+                  <option hidden>Interval</option>
+                  <option value="1m">1 Minute</option>
+                  <option value="5m">5 Minutes</option>
+                  <option value="15m">15 Minutes</option>
+                  <option value="30m">30 Minutes</option>
+                  <option value="1hour">1 Hour</option>
+                  <option value="4hour">4 Hour</option>
+                  <option value="Daily">Daily</option>
+                </select>
+              </div>
+              <div className="date-picker-wrapper-watchlist">
+                <DatePicker
+                  selected={endDate}
+                  onChange={(date) => setEndDate(date)}
+                  placeholderText="Select end date"
+                  maxDate={new Date()}
+                  className="date-picker-input"
+                />
+                <FontAwesomeIcon
+                  icon={faCalendarAlt}
+                  className="calendar-icon-watchlist-end-date"
+                />
+              </div>
+            </div>
+            <div className="save-asset-wrapper">
+              <button className="btn save-asset" onClick={handleSaveAsset}>
+                Save Asset
+              </button>
+            </div>
+            <div className="saved-assets">
+              <h2>Saved Assets:</h2>
+              {savedAssets.length > 0 && (
+                <ul>
+                  {savedAssets.map((assetSymbol) => (
+                    <li key={assetSymbol}>
+                      <button
+                        className="btn view-asset"
+                        onClick={() => handleAssetButtonClick(assetSymbol)}
+                      >
+                        {assetSymbol}
+                      </button>
+                      <button
+                        className="delete-asset"
+                        onClick={() => handleDeleteAsset(assetSymbol)}
+                        title="Delete asset"
+                      >
+                        &times;
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+          <div className="chart-container">
+            <div className="toggle-section">
+              <label className="toggle-label">
+                <Toggle
+                  checked={displayType === "returns"}
+                  onChange={handleToggleChange}
+                  icons={false}
+                  className="custom-toggle"
+                />
+                <span
+                  className={`toggle-text-left ${
+                    displayType === "historical" ? "active" : ""
+                  }`}
+                >
+                  Historical
+                </span>
+                <span
+                  className={`toggle-text-right ${
+                    displayType === "returns" ? "active" : ""
+                  }`}
+                >
+                  Returns
+                </span>
+              </label>
+            </div>
+            <canvas id="myChart" ref={chartRef}></canvas>
+          </div>
         </div>
       </div>
+      {modal && (
+        <div className="modal-container">
+          <div className="modal">
+            <div onClick={toggleModal} className="overlay"></div>
+            <div className="modal-content">
+              <h2>Are you sure you want to log out?</h2>
+              <Link to="/" className="custom-link">
+                <button className="btn modal-yes-btn" onClick={handleLogout}>
+                  Yes
+                </button>
+              </Link>
+              <button className="btn modal-no-btn" onClick={toggleModal}>
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

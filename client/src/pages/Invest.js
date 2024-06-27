@@ -7,6 +7,20 @@ import { Line } from "react-chartjs-2";
 import Chart from "chart.js/auto";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faHome,
+  faChartLine,
+  faEye,
+  faFolder,
+  faUser,
+  faSignOutAlt,
+  faExclamationTriangle,
+  faPlus,
+  faMinus,
+  faCalendarAlt,
+  faSearch,
+} from "@fortawesome/free-solid-svg-icons";
 
 export default function DashboardInvest() {
   const [isLoggedIn, setIsLoggedIn] = useState();
@@ -40,53 +54,27 @@ export default function DashboardInvest() {
   const [searchResultA, setSearchResultA] = useState(null);
   const [searchResultB, setSearchResultB] = useState(null);
   const [searchResultC, setSearchResultC] = useState(null);
+  const searchBarRefA = useRef(null);
+  const searchBarRefB = useRef(null);
+  const searchBarRefC = useRef(null);
+  const searchBarRefD = useRef(null);
   const [searchResultD, setSearchResultD] = useState(null);
-  const [searchWarningA, setSearchWarningA] = useState(
-    "Please search for an asset"
-  );
-  const [searchWarningB, setSearchWarningB] = useState(
-    "Please search for an asset"
-  );
-  const [searchWarningC, setSearchWarningC] = useState(
-    "Please search for an asset"
-  );
-  const [searchWarningD, setSearchWarningD] = useState(
-    "Please search for an asset"
-  );
   const [showInputA, setShowInputA] = useState(true);
   const [showInputB, setShowInputB] = useState(true);
-  const [showInputC, setShowInputC] = useState(true);
-  const [showInputD, setShowInputD] = useState(true);
-  const [showSearchAgainButtonA, setShowSearchAgainButtonA] = useState(false);
-  const [showSearchAgainButtonB, setShowSearchAgainButtonB] = useState(false);
-  const [showSearchAgainButtonC, setShowSearchAgainButtonC] = useState(false);
-  const [showSearchAgainButtonD, setShowSearchAgainButtonD] = useState(false);
+  const [showInputC, setShowInputC] = useState(false);
+  const [showInputD, setShowInputD] = useState(false);
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [interval, setInterval] = useState("");
+  const [interval, setIntervals] = useState("Interval");
   const [lineChartData, setLineChartData] = useState({});
   const [filteredDataA, setFilteredDataA] = useState([]);
   const [filteredDataB, setFilteredDataB] = useState([]);
   const [filteredDataC, setFilteredDataC] = useState([]);
   const [filteredDataD, setFilteredDataD] = useState([]);
   const [historicalDates, setHistoricalDates] = useState([]);
-  const [buttonNextDisabled, setButtonNextDisabled] = useState(true);
-  const [showSelectAssets, setShowSelectAssets] = useState(false);
-  const [showStartDate, setShowStartDate] = useState(false);
-  const [showEndDate, setShowEndDate] = useState(false);
-  const [showInterval, setShowInterval] = useState(false);
-  const [showNext, setShowNext] = useState(false);
-  const wrapperRefA = useRef(null);
-  const wrapperRefB = useRef(null);
-  const wrapperRefC = useRef(null);
-  const wrapperRefD = useRef(null);
-  const wrapperRefSelectAssets = useRef(null);
-  const wrapperRefStartDate = useRef(null);
-  const wrapperRefEndDate = useRef(null);
-  const wrapperRefInterval = useRef(null);
   const chartContainerRef = useRef(null);
   const chartInstanceRef = useRef(null);
 
@@ -97,12 +85,22 @@ export default function DashboardInvest() {
   const [efficientFrontierData, setEfficientFrontierData] = useState([]);
   const [riskFreeRate, setRiskFreeRate] = useState(null);
   const [clickedInfos, setClickedInfos] = useState([]);
-  const [lastValidSearchResultA, setLastValidSearchResultA] = useState(null);
-  const [lastValidSearchResultB, setLastValidSearchResultB] = useState(null);
-  const [lastValidSearchResultC, setLastValidSearchResultC] = useState(null);
-  const [lastValidSearchResultD, setLastValidSearchResultD] = useState(null);
+  // const [lastValidSearchResultA, setLastValidSearchResultA] = useState(null);
+  // const [lastValidSearchResultB, setLastValidSearchResultB] = useState(null);
+  // const [lastValidSearchResultC, setLastValidSearchResultC] = useState(null);
+  // const [lastValidSearchResultD, setLastValidSearchResultD] = useState(null);
+  const [dataFetched, setDataFetched] = useState(false);
+  const [step, setStep] = useState(0);
+  const [assetDataAvailability, setAssetDataAvailability] = useState({
+    A: true,
+    B: true,
+    C: true,
+    D: true,
+  });
 
-  const apiKey = "SbUhzMlpiU94dp9UtJGKlPs59R6DBpGi";
+  const [shouldRecalculate, setShouldRecalculate] = useState(false);
+
+  const apiKey = "SbUhzMlpiU94dp9UtJGKlPs59R6DBpGi ";
 
   // Check user's login status
   useEffect(() => {
@@ -143,567 +141,287 @@ export default function DashboardInvest() {
     }
   }, [modal]);
 
-  const handleSelectAssetsClick = (event) => {
-    event.stopPropagation();
-    setShowSelectAssets((prev) => !prev);
-  };
-
-  const handleStartDateClick = (event) => {
-    event.stopPropagation();
-    setShowStartDate((prev) => !prev);
-  };
-
-  const handleEndDateClick = (event) => {
-    event.stopPropagation();
-    setShowEndDate((prev) => !prev);
-  };
-
-  const handleIntervalClick = (event) => {
-    event.stopPropagation();
-    setShowInterval((prev) => !prev);
-  };
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        wrapperRefSelectAssets.current &&
-        !wrapperRefSelectAssets.current.contains(event.target)
+        searchBarRefA.current &&
+        !searchBarRefA.current.contains(event.target)
       ) {
-        setShowSelectAssets(false);
+        setSearchStateA((prevState) => ({
+          ...prevState,
+          suggestions: [],
+        }));
       }
-    };
-
-    if (showSelectAssets) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showSelectAssets]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
       if (
-        wrapperRefStartDate.current &&
-        !wrapperRefStartDate.current.contains(event.target)
+        searchBarRefB.current &&
+        !searchBarRefB.current.contains(event.target)
       ) {
-        setShowStartDate(false);
+        setSearchStateB((prevState) => ({
+          ...prevState,
+          suggestions: [],
+        }));
       }
-    };
-
-    if (showStartDate) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showStartDate]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
       if (
-        wrapperRefEndDate.current &&
-        !wrapperRefEndDate.current.contains(event.target)
+        searchBarRefC.current &&
+        !searchBarRefC.current.contains(event.target)
       ) {
-        setShowEndDate(false);
+        setSearchStateC((prevState) => ({
+          ...prevState,
+          suggestions: [],
+        }));
       }
-    };
-
-    if (showEndDate) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showEndDate]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
       if (
-        wrapperRefInterval.current &&
-        !wrapperRefInterval.current.contains(event.target)
+        searchBarRefD.current &&
+        !searchBarRefD.current.contains(event.target)
       ) {
-        setShowInterval(false);
+        setSearchStateD((prevState) => ({
+          ...prevState,
+          suggestions: [],
+        }));
       }
     };
-
-    if (showInterval) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showInterval]);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (wrapperRefA.current && !wrapperRefA.current.contains(event.target)) {
-        setSearchStateA((prevState) => ({ ...prevState, suggestions: [] }));
-        setSearchWarningA("Please search for an asset");
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [wrapperRefA]);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (wrapperRefB.current && !wrapperRefB.current.contains(event.target)) {
-        setSearchStateB((prevState) => ({ ...prevState, suggestions: [] }));
-        setSearchWarningB("Please search for an asset");
-      }
-    }
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [wrapperRefB]);
+  }, [searchBarRefA, searchBarRefB, searchBarRefC, searchBarRefD]);
 
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (wrapperRefC.current && !wrapperRefC.current.contains(event.target)) {
-        setSearchStateC((prevState) => ({ ...prevState, suggestions: [] }));
-        setSearchWarningC("Please search for an asset");
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+  const debounce = (func, delay) => {
+    let timeoutId;
+    return (...args) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func(...args);
+      }, delay);
     };
-  }, [wrapperRefC]);
+  };
 
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (wrapperRefD.current && !wrapperRefD.current.contains(event.target)) {
-        setSearchStateD((prevState) => ({ ...prevState, suggestions: [] }));
-        setSearchWarningD("Please search for an asset");
-      }
-    }
+  const fetchSuggestions = (input, setSearchState) => {
+    fetch(
+      `https://financialmodelingprep.com/api/v3/search?query=${input}&limit=5&apikey=${apiKey}`
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (!data) {
+          console.error("Error: Data is null");
+          setSearchState((prevState) => ({
+            ...prevState,
+            suggestions: [],
+          }));
+          return;
+        }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [wrapperRefD]);
+        const profilePromises = data.map((item) =>
+          fetch(
+            `https://financialmodelingprep.com/api/v3/profile/${item.symbol}?apikey=${apiKey}`
+          )
+            .then((response) => response.json())
+            .then((profileData) => ({
+              ...item,
+              profile: profileData[0],
+            }))
+        );
+
+        Promise.all(profilePromises)
+          .then((profiles) => {
+            const filteredSuggestions = profiles
+              .filter(
+                (profile) =>
+                  profile.profile && profile.profile.currency === "USD"
+              )
+              .map((profile) => ({
+                name: profile.name,
+                symbol: profile.symbol,
+              }));
+
+            setSearchState((prevState) => ({
+              ...prevState,
+              suggestions: filteredSuggestions,
+            }));
+          })
+          .catch((error) => {
+            console.error("Error fetching profiles:", error);
+            setSearchState((prevState) => ({
+              ...prevState,
+              suggestions: [],
+            }));
+          });
+      })
+      .catch((error) => {
+        console.error("Error fetching suggestions:", error);
+        setSearchState((prevState) => ({
+          ...prevState,
+          suggestions: [],
+        }));
+      });
+  };
 
   // Handle input change for asset A
   const handleInputChangeA = (e) => {
-    const input = e.target.value.trim(); // Trim input value
+    const input = e.target.value.trim();
     setSearchStateA((prevState) => ({
       ...prevState,
       companyName: input,
-    })); // Set company name in search state
+    }));
 
     if (!input) {
       setSearchStateA((prevState) => ({
         ...prevState,
         suggestions: [],
-      })); // Clear suggestions if input is empty
+      }));
       return;
     }
 
-    fetch(
-      `https://financialmodelingprep.com/api/v3/search?query=${input}&limit=5&apikey=${apiKey}`
-    ) // Fetch search suggestions
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`); // Handle HTTP error
-        }
-        return response.json(); // Parse response as JSON
-      })
-      .then((data) => {
-        if (!data) {
-          console.error("Error: Data is null"); // Handle null data
-          setSearchStateA((prevState) => ({
-            ...prevState,
-            suggestions: [],
-          }));
-          setSearchResultA(null);
-          setSearchWarningA("No matching company found"); // Clear suggestions
-          return;
-        }
-
-        const profilePromises = data.map((item) =>
-          fetch(
-            `https://financialmodelingprep.com/api/v3/profile/${item.symbol}?apikey=${apiKey}`
-          )
-            .then((response) => response.json())
-            .then((profileData) => ({
-              ...item,
-              profile: profileData[0],
-            }))
-        );
-
-        setSearchWarningA("");
-
-        Promise.all(profilePromises)
-          .then((profiles) => {
-            const filteredSuggestions = profiles
-              .filter(
-                (profile) =>
-                  profile.profile && profile.profile.currency === "USD"
-              )
-              .map((profile) => ({
-                name: profile.name,
-                symbol: profile.symbol,
-              }));
-
-            setSearchStateA((prevState) => ({
-              ...prevState,
-              suggestions: filteredSuggestions,
-            })); // Set filtered suggestions
-          })
-          .catch((error) => {
-            console.error("Error fetching profiles:", error); // Handle fetch error
-            setSearchStateA((prevState) => ({
-              ...prevState,
-              suggestions: [],
-            })); // Clear suggestions
-          });
-      })
-      .catch((error) => {
-        console.error("Error fetching suggestions:", error); // Handle fetch error
-        setSearchStateA((prevState) => ({
-          ...prevState,
-          suggestions: [],
-        })); // Clear suggestions
-      });
+    debounce(() => fetchSuggestions(input, setSearchStateA), 50)();
   };
 
   // Handle input change for asset B
   const handleInputChangeB = (e) => {
-    const input = e.target.value.trim(); // Trim input value
+    const input = e.target.value.trim();
     setSearchStateB((prevState) => ({
       ...prevState,
       companyName: input,
-    })); // Set company name in search state
+    }));
 
     if (!input) {
       setSearchStateB((prevState) => ({
         ...prevState,
         suggestions: [],
-      })); // Clear suggestions if input is empty
+      }));
       return;
     }
 
-    fetch(
-      `https://financialmodelingprep.com/api/v3/search?query=${input}&limit=5&apikey=${apiKey}`
-    ) // Fetch search suggestions
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`); // Handle HTTP error
-        }
-        return response.json(); // Parse response as JSON
-      })
-      .then((data) => {
-        if (!data) {
-          console.error("Error: Data is null"); // Handle null data
-          setSearchStateB((prevState) => ({
-            ...prevState,
-            suggestions: [],
-          })); // Clear suggestions
-          setSearchResultB(null);
-          setSearchWarningB("No matching company found"); // Clear suggestions
-          return;
-        }
-        const profilePromises = data.map((item) =>
-          fetch(
-            `https://financialmodelingprep.com/api/v3/profile/${item.symbol}?apikey=${apiKey}`
-          )
-            .then((response) => response.json())
-            .then((profileData) => ({
-              ...item,
-              profile: profileData[0],
-            }))
-        );
-
-        setSearchWarningB("");
-
-        Promise.all(profilePromises)
-          .then((profiles) => {
-            const filteredSuggestions = profiles
-              .filter(
-                (profile) =>
-                  profile.profile && profile.profile.currency === "USD"
-              )
-              .map((profile) => ({
-                name: profile.name,
-                symbol: profile.symbol,
-              }));
-
-            setSearchStateB((prevState) => ({
-              ...prevState,
-              suggestions: filteredSuggestions,
-            })); // Set filtered suggestions
-          })
-          .catch((error) => {
-            console.error("Error fetching profiles:", error); // Handle fetch error
-            setSearchStateB((prevState) => ({
-              ...prevState,
-              suggestions: [],
-            })); // Clear suggestions
-          });
-      })
-      .catch((error) => {
-        console.error("Error fetching suggestions:", error); // Handle fetch error
-        setSearchStateB((prevState) => ({
-          ...prevState,
-          suggestions: [],
-        })); // Clear suggestions
-      });
+    debounce(() => fetchSuggestions(input, setSearchStateB), 50)();
   };
+
   const handleInputChangeC = (e) => {
-    const input = e.target.value.trim(); // Trim input value
+    const input = e.target.value.trim();
     setSearchStateC((prevState) => ({
       ...prevState,
       companyName: input,
-    })); // Set company name in search state
+    }));
 
     if (!input) {
       setSearchStateC((prevState) => ({
         ...prevState,
         suggestions: [],
-      })); // Clear suggestions if input is empty
+      }));
       return;
     }
 
-    fetch(
-      `https://financialmodelingprep.com/api/v3/search?query=${input}&limit=5&apikey=${apiKey}`
-    ) // Fetch search suggestions
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`); // Handle HTTP error
-        }
-        return response.json(); // Parse response as JSON
-      })
-      .then((data) => {
-        if (!data) {
-          console.error("Error: Data is null"); // Handle null data
-          setSearchStateC((prevState) => ({
-            ...prevState,
-            suggestions: [],
-          }));
-          setSearchResultC(null);
-          setSearchWarningC("No matching company found"); // Clear suggestions
-          return;
-        }
-
-        const profilePromises = data.map((item) =>
-          fetch(
-            `https://financialmodelingprep.com/api/v3/profile/${item.symbol}?apikey=${apiKey}`
-          )
-            .then((response) => response.json())
-            .then((profileData) => ({
-              ...item,
-              profile: profileData[0],
-            }))
-        );
-
-        setSearchWarningC("");
-
-        Promise.all(profilePromises)
-          .then((profiles) => {
-            const filteredSuggestions = profiles
-              .filter(
-                (profile) =>
-                  profile.profile && profile.profile.currency === "USD"
-              )
-              .map((profile) => ({
-                name: profile.name,
-                symbol: profile.symbol,
-              }));
-
-            setSearchStateC((prevState) => ({
-              ...prevState,
-              suggestions: filteredSuggestions,
-            })); // Set filtered suggestions
-          })
-          .catch((error) => {
-            console.error("Error fetching profiles:", error); // Handle fetch error
-            setSearchStateC((prevState) => ({
-              ...prevState,
-              suggestions: [],
-            })); // Clear suggestions
-          });
-      })
-      .catch((error) => {
-        console.error("Error fetching suggestions:", error); // Handle fetch error
-        setSearchStateC((prevState) => ({
-          ...prevState,
-          suggestions: [],
-        })); // Clear suggestions
-      });
+    debounce(() => fetchSuggestions(input, setSearchStateC), 50)();
   };
+
   const handleInputChangeD = (e) => {
-    const input = e.target.value.trim(); // Trim input value
+    const input = e.target.value.trim();
     setSearchStateD((prevState) => ({
       ...prevState,
       companyName: input,
-    })); // Set company name in search state
+    }));
 
     if (!input) {
       setSearchStateD((prevState) => ({
         ...prevState,
         suggestions: [],
-      })); // Clear suggestions if input is empty
+      }));
       return;
     }
 
-    fetch(
-      `https://financialmodelingprep.com/api/v3/search?query=${input}&limit=5&apikey=${apiKey}`
-    ) // Fetch search suggestions
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`); // Handle HTTP error
-        }
-        return response.json(); // Parse response as JSON
-      })
-      .then((data) => {
-        if (!data) {
-          console.error("Error: Data is null"); // Handle null data
-          setSearchStateD((prevState) => ({
-            ...prevState,
-            suggestions: [],
-          }));
-          setSearchResultD(null);
-          setSearchWarningD("No matching company found"); // Clear suggestions
-          return;
-        }
-
-        const profilePromises = data.map((item) =>
-          fetch(
-            `https://financialmodelingprep.com/api/v3/profile/${item.symbol}?apikey=${apiKey}`
-          )
-            .then((response) => response.json())
-            .then((profileData) => ({
-              ...item,
-              profile: profileData[0],
-            }))
-        );
-
-        setSearchWarningD("");
-
-        Promise.all(profilePromises)
-          .then((profiles) => {
-            const filteredSuggestions = profiles
-              .filter(
-                (profile) =>
-                  profile.profile && profile.profile.currency === "USD"
-              )
-              .map((profile) => ({
-                name: profile.name,
-                symbol: profile.symbol,
-              }));
-
-            setSearchStateD((prevState) => ({
-              ...prevState,
-              suggestions: filteredSuggestions,
-            })); // Set filtered suggestions
-          })
-          .catch((error) => {
-            console.error("Error fetching profiles:", error); // Handle fetch error
-            setSearchStateD((prevState) => ({
-              ...prevState,
-              suggestions: [],
-            })); // Clear suggestions
-          });
-      })
-      .catch((error) => {
-        console.error("Error fetching suggestions:", error); // Handle fetch error
-        setSearchStateD((prevState) => ({
-          ...prevState,
-          suggestions: [],
-        })); // Clear suggestions
-      });
+    debounce(() => fetchSuggestions(input, setSearchStateD), 50)();
   };
 
   // Function to handle click on a suggestion for asset A
   const handleSuggestionClickA = (name, symbol) => {
     setSearchResultA([{ name, symbol }]);
-    setLastValidSearchResultA([{ name, symbol }]);
+    // setLastValidSearchResultA([{ name, symbol }]);
     setSearchStateA({
       ...searchStateA,
       companyName: "",
       suggestions: [], // Clear suggestions
     });
     setShowInputA(false); // Hiding input field
-    setShowSearchAgainButtonA(true); // Showing search again button
     setAssetSymbolA(symbol ? symbol : ""); // Setting asset symbol
   };
 
   // Function to handle click on a suggestion for asset B
   const handleSuggestionClickB = (name, symbol) => {
     setSearchResultB([{ name, symbol }]);
-    setLastValidSearchResultB([{ name, symbol }]);
+    // setLastValidSearchResultB([{ name, symbol }]);
     setSearchStateB({
       ...searchStateB,
       companyName: "",
       suggestions: [], // Clear suggestions
     });
     setShowInputB(false); // Hiding input field
-    setShowSearchAgainButtonB(true); // Showing search again button
     setAssetSymbolB(symbol ? symbol : ""); // Setting asset symbol
   };
 
   const handleSuggestionClickC = (name, symbol) => {
     setSearchResultC([{ name, symbol }]);
-    setLastValidSearchResultC([{ name, symbol }]);
+    // setLastValidSearchResultC([{ name, symbol }]);
     setSearchStateC({
       ...searchStateC,
       companyName: "",
       suggestions: [], // Clear suggestions
     });
     setShowInputC(false); // Hiding input field
-    setShowSearchAgainButtonC(true); // Showing search again button
     setAssetSymbolC(symbol ? symbol : ""); // Setting asset symbol
   };
   const handleSuggestionClickD = (name, symbol) => {
     setSearchResultD([{ name, symbol }]);
-    setLastValidSearchResultD([{ name, symbol }]);
+    // setLastValidSearchResultD([{ name, symbol }]);
     setSearchStateD({
       ...searchStateD,
       companyName: "",
       suggestions: [], // Clear suggestions
     });
     setShowInputD(false); // Hiding input field
-    setShowSearchAgainButtonD(true); // Showing search again button
     setAssetSymbolD(symbol ? symbol : ""); // Setting asset symbol
   };
 
-  const calculateReturns = (data) => {
-    if (data.length < 2) return []; // Ensure there's enough data to compute returns
+  const handleInputFocusA = () => {
+    if (searchStateA.companyName.trim() !== "") {
+      fetchSuggestions(searchStateA.companyName, setSearchStateA);
+    }
+  };
 
-    // Start mapping from the second element
+  const handleInputFocusB = () => {
+    if (searchStateB.companyName.trim() !== "") {
+      fetchSuggestions(searchStateB.companyName, setSearchStateB);
+    }
+  };
+
+  const handleInputFocusC = () => {
+    if (searchStateC.companyName.trim() !== "") {
+      fetchSuggestions(searchStateC.companyName, setSearchStateC);
+    }
+  };
+
+  const handleInputFocusD = () => {
+    if (searchStateD.companyName.trim() !== "") {
+      fetchSuggestions(searchStateD.companyName, setSearchStateD);
+    }
+  };
+
+  const calculateReturns = (data) => {
+    if (data.length < 2) return [];
+    console.log("Input data for calculateReturns: ", data); // Log input data
+
     const returns = data.slice(1).map((currentClose, index) => {
-      const previousClose = data[index]; // index is correct since we sliced the data
-      if (previousClose === 0) {
-        console.log(`Skipping index ${index + 1}: Previous close is zero`);
-        return undefined; // Or you could skip adding this return at all
-      }
+      const previousClose = data[index];
+      if (previousClose === 0) return undefined;
       const percentageChange =
         ((currentClose - previousClose) / previousClose) * 100;
       return percentageChange;
     });
 
-    // Optionally, filter out undefined entries if previous close was zero
+    console.log("Calculated returns (before filtering undefined): ", returns); // Log calculated returns
     return returns.filter((r) => r !== undefined);
   };
 
@@ -766,9 +484,24 @@ export default function DashboardInvest() {
     return matrix;
   }, []);
 
+  const formatDate = (date) => {
+    if (!date) return null;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   useEffect(() => {
     const fetchAndProcessData = async () => {
-      const symbols = [assetSymbolA, assetSymbolB, assetSymbolC, assetSymbolD];
+      if (!shouldRecalculate) return;
+
+      const symbols = [
+        assetSymbolA,
+        assetSymbolB,
+        assetSymbolC,
+        assetSymbolD,
+      ].filter(Boolean);
       const setters = [
         setFilteredDataA,
         setFilteredDataB,
@@ -776,25 +509,31 @@ export default function DashboardInvest() {
         setFilteredDataD,
       ];
 
-      const fetchInterval = interval === "Daily" ? "4hour" : interval;
+      if (symbols.length < 2) return;
 
-      const formatDate = (date) => {
-        return new Date(date).toISOString().split("T")[1];
-      };
+      const fetchInterval = interval === "Daily" ? "4hour" : interval;
 
       const formattedStartDate = formatDate(startDate);
       const formattedEndDate = formatDate(endDate);
 
+      console.log("Fetching data for symbols:", symbols);
+
       const dataPromises = symbols.map((symbol, index) => {
         if (!symbol) {
-          setters[index]([]); // Set empty data if symbol is not provided
+          setters[index]([]);
           return Promise.resolve([]);
         }
-        return fetch(
-          `https://financialmodelingprep.com/api/v3/historical-chart/${fetchInterval}/${symbol}?from=${formattedStartDate}&to=${formattedEndDate}&apikey=${apiKey}`
-        )
+
+        console.log(`API triggered for symbol: ${symbol}`);
+
+        const url = `https://financialmodelingprep.com/api/v3/historical-chart/${fetchInterval}/${symbol}?from=${formattedStartDate}&to=${formattedEndDate}&apikey=${apiKey}`;
+        console.log(url);
+
+        return fetch(url)
           .then((response) => response.json())
           .then((data) => {
+            console.log(`Fetched data for ${symbol}:`, data);
+
             if (interval === "Daily") {
               const groupedByDate = data.reduce((acc, cur) => {
                 const date = new Date(cur.date).toISOString().split("T")[0];
@@ -808,46 +547,63 @@ export default function DashboardInvest() {
                   values.reduce((a, b) => a + b, 0) / values.length;
                 return { date, close: average };
               });
+
+              console.log(
+                `Processed data for ${symbol} (Daily interval):`,
+                data
+              );
             }
 
-            const returns = data
-              ? calculateReturns(data.map((entry) => entry.close))
-              : [];
+            const closes = data.map((entry) => entry.close);
+            console.log(`Closing prices for ${symbol}:`, closes);
 
-            // Filter out null or undefined returns
+            const returns = calculateReturns(closes);
+            console.log(`Calculated returns for ${symbol}:`, returns);
+
             const validReturns = returns.filter(
               (r) => r !== null && r !== undefined
             );
 
-            // Set the specific state for each asset
+            console.log(`Valid returns for ${symbol}:`, validReturns);
+
             setters[index](validReturns);
             setHistoricalDates(data.map((entry) => entry.date));
+
+            setAssetDataAvailability((prev) => ({
+              ...prev,
+              [String.fromCharCode(65 + index)]: validReturns.length > 0,
+            }));
+
             return validReturns;
           });
       });
 
       const allData = await Promise.all(dataPromises);
+
+      console.log("All data after processing:", allData);
+
       const meanReturns = allData.map((r) => calculateMeanReturn(r));
+      console.log("Mean returns:", meanReturns);
+
       const volatilities = allData.map((r, index) =>
         calculateVolatility(r, meanReturns[index])
       );
-      const correlationMatrix = calculateCorrelationMatrix(allData);
+      console.log("Volatilities:", volatilities);
 
-      // Set state for global calculations
+      const correlationMatrix = calculateCorrelationMatrix(allData);
+      console.log("Correlation matrix:", correlationMatrix);
+
       setAssetsReturn(meanReturns);
       setAssetsVol(volatilities);
       setAssetsCorrelationMatrix(correlationMatrix);
+      setDataFetched(true);
+
+      sessionStorage.setItem("meanReturns", JSON.stringify(meanReturns));
+
+      setShouldRecalculate(false);
     };
 
-    if (
-      assetSymbolA &&
-      assetSymbolB &&
-      assetSymbolC &&
-      assetSymbolD &&
-      startDate &&
-      endDate &&
-      interval
-    ) {
+    if (startDate && endDate && interval !== "Interval") {
       fetchAndProcessData();
     }
   }, [
@@ -860,6 +616,7 @@ export default function DashboardInvest() {
     interval,
     apiKey,
     calculateCorrelationMatrix,
+    shouldRecalculate, // Added dependency
   ]);
 
   // Function to handle user logout
@@ -875,367 +632,37 @@ export default function DashboardInvest() {
       console.error("Error logging out:", error);
     }
   };
-
   useEffect(() => {
-    console.log("Checking filtered data and historical dates:", {
-      filteredDataA,
-      filteredDataB,
-      filteredDataC,
-      filteredDataD,
-      historicalDates,
-    });
-    if (!filteredDataA || !filteredDataB || !filteredDataC || !filteredDataD) {
-      console.log("No data found");
-      return; // Return if necessary data is missing
-    }
+    if (!dataFetched) return;
 
-    if (
-      filteredDataA.length <= 0 &&
-      filteredDataB.length > 0 &&
-      filteredDataC.length > 0 &&
-      filteredDataD.length > 0 &&
-      historicalDates.length <= 0
-    ) {
-      setSearchWarningA(
-        "Search for a new asset. This one does not have enough data"
-      );
-      console.log("0");
-      setSearchResultA(null);
-      setShowSearchAgainButtonA(false);
-      setShowInputA(true);
-    }
-    if (
-      filteredDataA.length <= 0 &&
-      filteredDataB.length <= 0 &&
-      filteredDataC.length > 0 &&
-      filteredDataD.length > 0 &&
-      historicalDates.length <= 0
-    ) {
-      console.log("1");
-      setSearchWarningA(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchWarningB(
-        "Search for a new asset. This one does not have enough data"
-      );
+    const validSymbols = [
+      assetSymbolA,
+      assetSymbolB,
+      assetSymbolC,
+      assetSymbolD,
+    ].filter(Boolean);
 
-      setSearchResultA(null);
-      setShowSearchAgainButtonA(false);
-      setShowInputA(true);
-      setSearchResultB(null);
-      setShowSearchAgainButtonB(false);
-      setShowInputB(true);
-    }
-    if (
-      filteredDataA.length <= 0 &&
-      filteredDataB.length > 0 &&
-      filteredDataC.length <= 0 &&
-      filteredDataD.length > 0 &&
-      historicalDates.length <= 0
-    ) {
-      console.log("2");
-      setSearchWarningA(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchWarningC(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchResultA(null);
-      setShowSearchAgainButtonA(false);
-      setShowInputA(true);
-      setSearchResultC(null);
-      setShowSearchAgainButtonC(false);
-      setShowInputC(true);
-    }
-    if (
-      filteredDataA.length <= 0 &&
-      filteredDataB.length > 0 &&
-      filteredDataC.length > 0 &&
-      filteredDataD.length <= 0 &&
-      historicalDates.length <= 0
-    ) {
-      console.log("3");
-      setSearchWarningA(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchWarningD(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchResultA(null);
-      setShowSearchAgainButtonA(false);
-      setShowInputA(true);
-      setSearchResultD(null);
-      setShowSearchAgainButtonD(false);
-      setShowInputD(true);
-    }
-    if (
-      filteredDataA.length <= 0 &&
-      filteredDataB.length <= 0 &&
-      filteredDataC.length <= 0 &&
-      filteredDataD.length > 0 &&
-      historicalDates.length <= 0
-    ) {
-      console.log("4");
-      setSearchWarningA(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchWarningB(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchWarningC(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchResultA(null);
-      setShowSearchAgainButtonA(false);
-      setShowInputA(true);
-      setSearchResultB(null);
-      setShowSearchAgainButtonB(false);
-      setShowInputB(true);
-      setSearchResultC(null);
-      setShowSearchAgainButtonC(false);
-      setShowInputC(true);
-    }
-    if (
-      filteredDataA.length <= 0 &&
-      filteredDataB.length <= 0 &&
-      filteredDataC.length > 0 &&
-      filteredDataD.length <= 0 &&
-      historicalDates.length <= 0
-    ) {
-      console.log("5");
-      setSearchWarningA(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchWarningB(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchWarningD(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchResultA(null);
-      setShowSearchAgainButtonA(false);
-      setShowInputA(true);
-      setSearchResultB(null);
-      setShowSearchAgainButtonB(false);
-      setShowInputB(true);
-      setSearchResultD(null);
-      setShowSearchAgainButtonD(false);
-      setShowInputD(true);
-    }
-    if (
-      filteredDataA.length <= 0 &&
-      filteredDataB.length > 0 &&
-      filteredDataC.length <= 0 &&
-      filteredDataD.length <= 0 &&
-      historicalDates.length <= 0
-    ) {
-      console.log("6");
-      setSearchWarningA(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchWarningC(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchWarningD(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchResultA(null);
-      setShowSearchAgainButtonA(false);
-      setShowInputA(true);
-      setSearchResultC(null);
-      setShowSearchAgainButtonC(false);
-      setShowInputC(true);
-      setSearchResultD(null);
-      setShowSearchAgainButtonD(false);
-      setShowInputD(true);
-    }
-    if (
-      filteredDataA.length > 0 &&
-      filteredDataB.length <= 0 &&
-      filteredDataC.length > 0 &&
-      filteredDataD.length > 0 &&
-      historicalDates.length <= 0
-    ) {
-      console.log("7");
-      setSearchWarningB(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchResultB(null);
-      setShowSearchAgainButtonB(false);
-      setShowInputB(true);
-    }
-    if (
-      filteredDataA.length > 0 &&
-      filteredDataB.length <= 0 &&
-      filteredDataC.length <= 0 &&
-      filteredDataD.length > 0 &&
-      historicalDates.length < 0
-    ) {
-      console.log("8");
-      setSearchWarningB(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchWarningC(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchResultB(null);
-      setShowSearchAgainButtonB(false);
-      setShowInputB(true);
-      setSearchResultC(null);
-      setShowSearchAgainButtonC(false);
-      setShowInputC(true);
-    }
-    if (
-      filteredDataA.length > 0 &&
-      filteredDataB.length <= 0 &&
-      filteredDataC.length <= 0 &&
-      filteredDataD.length <= 0 &&
-      historicalDates.length <= 0
-    ) {
-      console.log("9");
-      setSearchWarningB(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchWarningC(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchWarningD(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchResultB(null);
-      setShowSearchAgainButtonB(false);
-      setShowInputB(true);
-      setSearchResultC(null);
-      setShowSearchAgainButtonC(false);
-      setShowInputC(true);
-      setSearchResultD(null);
-      setShowSearchAgainButtonD(false);
-      setShowInputD(true);
-    }
-    if (
-      filteredDataA.length > 0 &&
-      filteredDataB.length > 0 &&
-      filteredDataC.length <= 0 &&
-      filteredDataD.length > 0 &&
-      historicalDates.length <= 0
-    ) {
-      console.log("10");
-      setSearchWarningC(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchResultC(null);
-      setShowSearchAgainButtonC(false);
-      setShowInputC(true);
-    }
-    if (
-      filteredDataA.length > 0 &&
-      filteredDataB.length > 0 &&
-      filteredDataC.length <= 0 &&
-      filteredDataD.length <= 0 &&
-      historicalDates.length <= 0
-    ) {
-      console.log("11");
-      setSearchWarningC(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchWarningD(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchResultC(null);
-      setShowSearchAgainButtonC(false);
-      setShowInputC(true);
-      setSearchResultD(null);
-      setShowSearchAgainButtonD(false);
-      setShowInputD(true);
-    }
-    if (
-      filteredDataA.length > 0 &&
-      filteredDataB.length <= 0 &&
-      filteredDataC.length > 0 &&
-      filteredDataD.length <= 0 &&
-      historicalDates.length <= 0
-    ) {
-      console.log("12");
-      setSearchWarningB(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchWarningD(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchResultB(null);
-      setShowSearchAgainButtonB(false);
-      setShowInputB(true);
-      setSearchResultD(null);
-      setShowSearchAgainButtonD(false);
-      setShowInputD(true);
-    }
-    if (
-      filteredDataA.length > 0 &&
-      filteredDataB.length > 0 &&
-      filteredDataC.length > 0 &&
-      filteredDataD.length <= 0 &&
-      historicalDates.length <= 0
-    ) {
-      console.log("13");
-      setSearchWarningD(
-        "Search for a new asset. This one does not have enough data"
-      );
-      setSearchResultD(null);
-      setShowSearchAgainButtonD(false);
-      setShowInputD(true);
-    }
-    if (
-      filteredDataA.length > 0 &&
-      filteredDataB.length > 0 &&
-      filteredDataC.length > 0 &&
-      filteredDataD.length > 0
-    ) {
-      setButtonNextDisabled(false);
-      setSearchResultA(lastValidSearchResultA);
-      setSearchResultB(lastValidSearchResultB);
-      setSearchResultC(lastValidSearchResultC);
-      setSearchResultD(lastValidSearchResultD);
-      setShowSearchAgainButtonA(true);
-      setShowInputA(false);
-      setShowSearchAgainButtonB(true);
-      setShowInputB(false);
-      setShowSearchAgainButtonC(true);
-      setShowInputC(false);
-      setShowSearchAgainButtonD(true);
-      setShowInputD(false);
-    }
+    const reversedHistoricalDates = historicalDates.slice().reverse();
+    const reversedFilteredDataA = filteredDataA.slice().reverse();
+    const reversedFilteredDataB = filteredDataB.slice().reverse();
+    const reversedFilteredDataC = filteredDataC.slice().reverse();
+    const reversedFilteredDataD = filteredDataD.slice().reverse();
 
     setLineChartData({
-      labels: historicalDates,
+      labels: reversedHistoricalDates,
       datasets: [
-        {
-          label: assetSymbolA,
-          data: filteredDataA,
+        ...validSymbols.map((symbol, index) => ({
+          label: symbol,
+          data: [
+            reversedFilteredDataA,
+            reversedFilteredDataB,
+            reversedFilteredDataC,
+            reversedFilteredDataD,
+          ][index],
           fill: false,
-          borderColor: "green",
+          borderColor: ["green", "blue", "pink", "purple"][index],
           tension: 0.1,
-        },
-        {
-          label: assetSymbolB,
-          data: filteredDataB,
-          fill: false,
-          borderColor: "blue",
-          tension: 0.1,
-        },
-        {
-          label: assetSymbolC,
-          data: filteredDataC,
-          fill: false,
-          borderColor: "pink",
-          tension: 0.1,
-        },
-        {
-          label: assetSymbolD,
-          data: filteredDataD,
-          fill: false,
-          borderColor: "purple",
-          tension: 0.1,
-        },
+        })),
       ],
     });
   }, [
@@ -1248,10 +675,7 @@ export default function DashboardInvest() {
     assetSymbolC,
     assetSymbolD,
     historicalDates,
-    lastValidSearchResultA,
-    lastValidSearchResultB,
-    lastValidSearchResultC,
-    lastValidSearchResultD,
+    dataFetched,
   ]);
 
   const options = {
@@ -1286,7 +710,7 @@ export default function DashboardInvest() {
   };
 
   const handleClearButtonClick = () => {
-    // Reset relevant states
+    // Reset relevant states for cases 0, 1, 2, 3, and 4
     setSearchStateA({
       companyName: "",
       hasSearched: false,
@@ -1311,20 +735,13 @@ export default function DashboardInvest() {
     setSearchResultB(null);
     setSearchResultC(null);
     setSearchResultD(null);
-    setSearchWarningA("Please search for an asset");
-    setSearchWarningB("Please search for an asset");
-    setSearchWarningC("Please search for an asset");
-    setSearchWarningD("Please search for an asset");
     setShowInputA(true);
     setShowInputB(true);
-    setShowInputC(true);
-    setShowInputD(true);
-    setShowSearchAgainButtonA(false);
-    setShowSearchAgainButtonB(false);
-    setShowSearchAgainButtonC(false);
-    setShowSearchAgainButtonD(false);
-    setStartDate("");
-    setEndDate("");
+    setShowInputC(false);
+    setShowInputD(false);
+    setStartDate(null);
+    setEndDate(null);
+    setIntervals("Interval");
     setAssetSymbolA("");
     setAssetSymbolB("");
     setAssetSymbolC("");
@@ -1334,22 +751,75 @@ export default function DashboardInvest() {
     setFilteredDataB([]);
     setFilteredDataC([]);
     setFilteredDataD([]);
-    setButtonNextDisabled(true);
-  };
-
-  const handleNextButtonClick = async () => {
-    if (showNext === true) {
-      setShowNext(false);
-      setClickedInfos([]);
-      console.log(false);
-    } else if (showNext === false) {
-      setShowNext(true);
-      console.log(true);
-    }
+    setHistoricalDates([]);
+    setStep(0);
+    setClickedInfos([]);
+    setDataFetched(false);
+    setAssetDataAvailability({
+      A: true,
+      B: true,
+      C: true,
+      D: true,
+    });
+    setShouldRecalculate(false);
   };
 
   const handleDeleteButtonClick = (index) => {
-    setClickedInfos((prevInfos) => prevInfos.filter((_, i) => i !== index));
+    const updatedSymbols = [
+      assetSymbolA,
+      assetSymbolB,
+      assetSymbolC,
+      assetSymbolD,
+    ];
+    const setters = [
+      setSearchResultA,
+      setSearchResultB,
+      setSearchResultC,
+      setSearchResultD,
+    ];
+    const symbolSetters = [
+      setAssetSymbolA,
+      setAssetSymbolB,
+      setAssetSymbolC,
+      setAssetSymbolD,
+    ];
+    const dataSetters = [
+      setFilteredDataA,
+      setFilteredDataB,
+      setFilteredDataC,
+      setFilteredDataD,
+    ];
+    const showInputSetters = [
+      setShowInputA,
+      setShowInputB,
+      setShowInputC,
+      setShowInputD,
+    ];
+
+    // Ensure the first two search bars are not deleted, but their symbols and results are cleared
+    if (index < 2) {
+      setters[index](null);
+      symbolSetters[index]("");
+      dataSetters[index]([]);
+      updatedSymbols[index] = "";
+
+      setClickedInfos((prevInfos) => prevInfos.filter((_, i) => i !== index));
+      // Set shouldRecalculate to true after clearing asset data
+      setShouldRecalculate(true);
+    } else if (index >= 2 && index < updatedSymbols.length) {
+      setters[index](null);
+      symbolSetters[index]("");
+      dataSetters[index]([]);
+      updatedSymbols[index] = "";
+
+      setClickedInfos((prevInfos) => prevInfos.filter((_, i) => i !== index));
+
+      // Hide the search bar for the deleted asset
+      showInputSetters[index](false);
+
+      // Set shouldRecalculate to true after asset deletion
+      setShouldRecalculate(true);
+    }
   };
 
   useEffect(() => {
@@ -1401,10 +871,18 @@ export default function DashboardInvest() {
 
   const calculatePortfolioMetrics = useCallback(
     (weights) => {
+      console.log("Weights:", weights);
+      console.log("Assets Return:", assetsReturn);
+      console.log("Assets Volatility:", assetsVol);
+      console.log("Assets Correlation Matrix:", assetsCorrelationMatrix);
+      console.log("Risk-Free Rate:", riskFreeRate);
+
       const portfolioReturn = weights.reduce(
         (acc, weight, index) => acc + weight * assetsReturn[index],
         0
       );
+
+      console.log("Calculated Portfolio Return:", portfolioReturn);
 
       let portfolioVolatility = 0;
       for (let i = 0; i < weights.length; i++) {
@@ -1417,14 +895,18 @@ export default function DashboardInvest() {
             assetsCorrelationMatrix[i][j];
         }
       }
-      const portfolioVolatilitySqrt = Math.sqrt(portfolioVolatility);
+      portfolioVolatility = Math.sqrt(portfolioVolatility);
+
+      console.log("Calculated Portfolio Volatility:", portfolioVolatility);
 
       const sharpeRatio =
-        (portfolioReturn - riskFreeRate) / portfolioVolatilitySqrt;
+        (portfolioReturn - riskFreeRate) / portfolioVolatility;
+
+      console.log("Calculated Sharpe Ratio:", sharpeRatio);
 
       return {
         return: portfolioReturn,
-        volatility: portfolioVolatilitySqrt,
+        volatility: portfolioVolatility,
         sharpeRatio,
       };
     },
@@ -1433,11 +915,11 @@ export default function DashboardInvest() {
 
   const optimizePortfolio = useCallback(
     (initialWeights, targetReturn) => {
-      const tolerance = 0.00001;
+      const tolerance = 0.000001;
       let currentWeights = initialWeights.slice();
       let learningRate = 0.001;
       let iteration = 0;
-      const maxIterations = 1000;
+      const maxIterations = 10000;
 
       const calculateReturn = (weights) => {
         return weights.reduce(
@@ -1506,14 +988,34 @@ export default function DashboardInvest() {
           break;
         }
 
+        if (iteration % 100 === 0) {
+          const portReturn = calculateReturn(currentWeights);
+          const portVariance = calculateVariance(currentWeights);
+          console.log(
+            `Iteration ${iteration}: Return=${portReturn}, Variance=${portVariance}, Weights=${currentWeights}`
+          );
+        }
+
         iteration++;
         // Decay learning rate
         learningRate *= 0.99;
       }
 
+      const optimizedMetrics = calculatePortfolioMetrics(currentWeights);
+
+      console.log(`Optimized Portfolio for Target Return ${targetReturn}:`, {
+        weights: currentWeights,
+        ...optimizedMetrics,
+      });
+
       return currentWeights;
     },
-    [assetsReturn, assetsVol, assetsCorrelationMatrix]
+    [
+      assetsReturn,
+      assetsVol,
+      assetsCorrelationMatrix,
+      calculatePortfolioMetrics,
+    ]
   );
 
   const findEfficientFrontier = useCallback(() => {
@@ -1525,11 +1027,9 @@ export default function DashboardInvest() {
       return { portfolios: [], volatilities: [] };
     }
 
-    // Define minimum and maximum returns
     const minReturn = Math.min(...validAssetsReturn);
     const maxReturn = Math.max(...validAssetsReturn);
 
-    // Generate 100 target returns evenly distributed between min and max returns
     const targetReturns = Array.from(
       { length: 100 },
       (_, i) => minReturn + (maxReturn - minReturn) * (i / 99)
@@ -1544,82 +1044,84 @@ export default function DashboardInvest() {
       return calculatePortfolioMetrics(optimizedWeights);
     });
 
-    // Extract volatilities (standard deviation) of the portfolios
-    const volatilities = portfolios.map(
-      (portfolio) => portfolio.standardDeviation
-    );
-
+    const volatilities = portfolios.map((portfolio) => portfolio.volatility);
     return { portfolios, volatilities };
   }, [assetsReturn, optimizePortfolio, calculatePortfolioMetrics]);
 
   const generateRandomPortfolios = useCallback(() => {
-    // Obtain the efficient frontier portfolios and volatilities
-    const { volatilities } = findEfficientFrontier();
-
-    if (volatilities.length === 0) {
-      return [];
-    }
-
-    // Calculate average volatility or use another metric
-    const averageVolatility =
-      volatilities.reduce((a, b) => a + b, 0) / volatilities.length;
-
-    // Set default exponents to avoid issues
-    const exponentHigh = Math.min(1, averageVolatility / 10) || 1;
-    const exponentLow = Math.min(1, averageVolatility / 100) || 1;
-
     const numPortfolios = 500;
-    return Array.from({ length: numPortfolios }, () => {
-      // Generate weights with more variability
-      const rawWeights = Array.from({ length: assetsReturn.length }, () => {
-        const randomValue = Math.random();
-        const exponent = randomValue > 0.5 ? exponentHigh : exponentLow;
-        return Math.pow(randomValue, exponent);
+    const portfolios = [];
+
+    for (let i = 0; i < numPortfolios; i++) {
+      let weights = Array.from({ length: assetsReturn.length }, () =>
+        Math.random()
+      );
+      const totalWeight = weights.reduce((acc, curr) => acc + curr, 0);
+      weights = weights.map((weight) => weight / totalWeight);
+
+      weights = weights.map((weight) => weight + (Math.random() - 0.5) * 0.1);
+      weights = weights.map((weight) => Math.max(0, Math.min(1, weight)));
+      const normalizedWeightSum = weights.reduce((acc, curr) => acc + curr, 0);
+      weights = weights.map((weight) => weight / normalizedWeightSum);
+
+      const portfolioMetrics = calculatePortfolioMetrics(weights);
+
+      console.log(`Generated Portfolio ${i + 1}:`, {
+        weights,
+        ...portfolioMetrics,
       });
 
-      const totalWeight = rawWeights.reduce((acc, curr) => acc + curr, 0);
-      if (totalWeight === 0 || isNaN(totalWeight)) {
-        console.error("Invalid total weight:", totalWeight);
-        return { return: NaN, volatility: NaN, sharpeRatio: NaN };
-      }
+      portfolios.push({ ...portfolioMetrics, weights });
+    }
 
-      const normalizedWeights = rawWeights.map(
-        (weight) => weight / totalWeight
-      );
-
-      return calculatePortfolioMetrics(normalizedWeights);
-    });
-  }, [assetsReturn, findEfficientFrontier, calculatePortfolioMetrics]);
+    return portfolios;
+  }, [assetsReturn, calculatePortfolioMetrics]);
 
   useEffect(() => {
+    if (!dataFetched) return;
+
     if (riskFreeRate !== null) {
       setMonteCarloPortfolios(generateRandomPortfolios());
       setEfficientFrontierData(findEfficientFrontier());
     }
-  }, [riskFreeRate, generateRandomPortfolios, findEfficientFrontier]);
+  }, [
+    riskFreeRate,
+    generateRandomPortfolios,
+    findEfficientFrontier,
+    dataFetched,
+  ]);
 
-  const calculateBestOutcome = useCallback(
-    (percentile) => {
-      const sortedReturns = monteCarloPortfolios
-        .map((p) => p.return)
-        .sort((a, b) => a - b);
-      const index = Math.ceil(percentile * sortedReturns.length) - 1;
-      return sortedReturns[index];
-    },
-    [monteCarloPortfolios]
-  );
+  const calculateBestOutcome = useCallback((percentile, returns) => {
+    const sortedReturns = returns.sort((a, b) => a - b);
+    const index = Math.ceil(percentile * sortedReturns.length) - 1;
+    return sortedReturns[index];
+  }, []);
 
   useEffect(() => {
     const isEfficientFrontierArray = Array.isArray(
       efficientFrontierData.portfolios
     );
 
-    if (chartContainerRef.current && showNext && isEfficientFrontierArray) {
+    if (
+      chartContainerRef.current &&
+      isEfficientFrontierArray &&
+      dataFetched &&
+      step === 5
+    ) {
       const formattedEfficientFrontierData =
         efficientFrontierData.portfolios.map((portfolio) => ({
           x: portfolio.volatility,
           y: portfolio.return,
+          metrics: portfolio,
         }));
+
+      const formattedRandomPortfolios = monteCarloPortfolios.map(
+        (portfolio) => ({
+          x: portfolio.volatility + (Math.random() - 0.5) * 0.1,
+          y: portfolio.return + (Math.random() - 0.5) * 0.1,
+          metrics: portfolio,
+        })
+      );
 
       const ctx = chartContainerRef.current.getContext("2d");
       if (chartInstanceRef.current) {
@@ -1642,10 +1144,7 @@ export default function DashboardInvest() {
             },
             {
               label: "Random Portfolios",
-              data: monteCarloPortfolios.map((portfolio) => ({
-                x: portfolio.volatility,
-                y: portfolio.return,
-              })),
+              data: formattedRandomPortfolios,
               backgroundColor: "rgba(128, 128, 128, 0.5)",
               pointRadius: 3,
             },
@@ -1659,9 +1158,10 @@ export default function DashboardInvest() {
               intersect: false,
               callbacks: {
                 label: function (context) {
-                  return `Return: ${context.parsed.y.toFixed(
+                  const metrics = context.raw.metrics;
+                  return `Return: ${metrics.return.toFixed(
                     2
-                  )}%, Volatility: ${context.parsed.x.toFixed(2)}%`;
+                  )}%, Volatility: ${metrics.volatility.toFixed(2)}%`;
                 },
               },
             },
@@ -1682,55 +1182,48 @@ export default function DashboardInvest() {
               beginAtZero: false,
             },
           },
-          onClick: (event, elements) => {
+          onClick: async (event, elements) => {
             if (elements.length > 0) {
-              elements.forEach((element) => {
-                const datasetIndex = element.datasetIndex;
-                const dataIndex = element.index;
-                let clickedPortfolio;
+              const element = elements[0];
+              const datasetIndex = element.datasetIndex;
+              const dataIndex = element.index;
+              const clickedData =
+                chartInstanceRef.current.data.datasets[datasetIndex].data[
+                  dataIndex
+                ];
 
-                if (datasetIndex === 1) {
-                  // Random Portfolios dataset
-                  clickedPortfolio = monteCarloPortfolios[dataIndex];
-                } else if (datasetIndex === 0) {
-                  // Efficient Frontier dataset
-                  clickedPortfolio =
-                    efficientFrontierData.portfolios[dataIndex];
-                }
+              const clickedPortfolio = clickedData.metrics;
 
-                if (clickedPortfolio) {
-                  const bestOutcomeReturn = calculateBestOutcome(0.99);
-                  const clickedWeights = optimizePortfolio(
-                    Array.from(
-                      { length: assetsReturn.length },
-                      () => 1 / assetsReturn.length
-                    ),
-                    clickedPortfolio.return
-                  ).map((weight) => (weight * 100).toFixed(2));
+              if (clickedPortfolio) {
+                const meanReturns =
+                  JSON.parse(sessionStorage.getItem("meanReturns")) || [];
+                const bestOutcomeReturn = calculateBestOutcome(
+                  0.99,
+                  meanReturns
+                );
 
-                  const assetSymbols = [
-                    assetSymbolA,
-                    assetSymbolB,
-                    assetSymbolC,
-                    assetSymbolD,
-                  ];
+                const cardInfo = {
+                  return: clickedPortfolio.return.toFixed(2),
+                  volatility: clickedPortfolio.volatility.toFixed(2),
+                  bestOutcomeReturn: bestOutcomeReturn.toFixed(2),
+                  portfolioComponents: clickedPortfolio.weights.map(
+                    (weight, index) =>
+                      `Asset ${
+                        [
+                          assetSymbolA,
+                          assetSymbolB,
+                          assetSymbolC,
+                          assetSymbolD,
+                        ][index]
+                      }: ${(weight * 100).toFixed(2)}%`
+                  ),
+                };
 
-                  const portfolioComponents = assetsReturn.map(
-                    (assetReturn, index) =>
-                      `Asset ${assetSymbols[index]} : ${clickedWeights[index]}%`
-                  );
+                console.log("Clicked Portfolio Data:", cardInfo);
+                console.log("Best Outcome after clicking:", bestOutcomeReturn);
 
-                  const cardInfo = {
-                    return: clickedPortfolio.return.toFixed(2),
-                    volatility: clickedPortfolio.volatility.toFixed(2),
-                    bestOutcomeReturn: (bestOutcomeReturn * 100).toFixed(2),
-                    portfolioComponents,
-                  };
-
-                  console.log("Clicked Portfolio Information", cardInfo);
-                  setClickedInfos((prevInfos) => [...prevInfos, cardInfo]);
-                }
-              });
+                setClickedInfos((prevInfos) => [...prevInfos, cardInfo]);
+              }
             }
           },
         },
@@ -1745,397 +1238,794 @@ export default function DashboardInvest() {
   }, [
     monteCarloPortfolios,
     efficientFrontierData,
-    optimizePortfolio,
     assetsReturn,
     calculateBestOutcome,
-    showNext,
     assetSymbolA,
     assetSymbolB,
     assetSymbolC,
     assetSymbolD,
+    dataFetched,
+    step,
   ]);
 
-  return (
-    <div className="dashboard">
-      <div className="page-title">
-        {/* Link to home */}
-        <Link to="/" className="custom-link">
-          <h2>Placeholder</h2>
-        </Link>
+  const handleSavePortfolio = async (portfolio) => {
+    console.log("Portfolio being saved:", portfolio);
+
+    const currentDate = new Date().toISOString();
+
+    const formattedStartDate = formatDate(startDate);
+    const formattedEndDate = formatDate(endDate);
+
+    const data = {
+      asset1Name: assetSymbolA,
+      asset1Percent: portfolio.portfolioComponents[0].split(": ")[1].trim(),
+      asset2Name: assetSymbolB,
+      asset2Percent: portfolio.portfolioComponents[1].split(": ")[1].trim(),
+      expectedReturn: portfolio.return,
+      risk: portfolio.volatility,
+      bestOutcome: portfolio.bestOutcomeReturn,
+      dateCreated: currentDate,
+      dateUpdated: currentDate,
+      startDate: formattedStartDate,
+      endDate: formattedEndDate,
+      interval: interval,
+    };
+
+    if (portfolio.portfolioComponents[2]) {
+      data.asset3Name = assetSymbolC;
+      data.asset3Percent = portfolio.portfolioComponents[2]
+        .split(": ")[1]
+        .trim();
+    }
+
+    if (portfolio.portfolioComponents[3]) {
+      data.asset4Name = assetSymbolD;
+      data.asset4Percent = portfolio.portfolioComponents[3]
+        .split(": ")[1]
+        .trim();
+    }
+
+    console.log("Data being sent to backend:", data);
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3002/save-data-portfolio",
+        {
+          username: username,
+          savedData: data,
+        }
+      );
+      if (response.status === 200) {
+        console.log("Data saved successfully");
+      }
+    } catch (error) {
+      console.error("Error saving portfolio data:", error.message);
+    }
+  };
+
+  const updateLineChartData = useCallback(() => {
+    const validSymbols = [
+      assetSymbolA,
+      assetSymbolB,
+      assetSymbolC,
+      assetSymbolD,
+    ].filter(Boolean);
+
+    const reversedHistoricalDates = historicalDates.slice().reverse();
+    const reversedFilteredDataA = filteredDataA.slice().reverse();
+    const reversedFilteredDataB = filteredDataB.slice().reverse();
+    const reversedFilteredDataC = filteredDataC.slice().reverse();
+    const reversedFilteredDataD = filteredDataD.slice().reverse();
+
+    setLineChartData({
+      labels: reversedHistoricalDates,
+      datasets: [
+        ...validSymbols.map((symbol, index) => ({
+          label: symbol,
+          data: [
+            reversedFilteredDataA,
+            reversedFilteredDataB,
+            reversedFilteredDataC,
+            reversedFilteredDataD,
+          ][index],
+          fill: false,
+          borderColor: ["green", "blue", "pink", "purple"][index],
+          tension: 0.1,
+        })),
+      ],
+    });
+  }, [
+    assetSymbolA,
+    assetSymbolB,
+    assetSymbolC,
+    assetSymbolD,
+    historicalDates,
+    filteredDataA,
+    filteredDataB,
+    filteredDataC,
+    filteredDataD,
+  ]);
+
+  useEffect(() => {
+    if (dataFetched) {
+      updateLineChartData();
+    }
+  }, [
+    dataFetched,
+    assetSymbolA,
+    assetSymbolB,
+    assetSymbolC,
+    assetSymbolD,
+    filteredDataA,
+    filteredDataB,
+    filteredDataC,
+    filteredDataD,
+    updateLineChartData,
+  ]);
+
+  const handleNextStep = () => {
+    if (step === 3) {
+      updateLineChartData();
+    }
+    setStep((prevStep) => prevStep + 1);
+  };
+
+  const handlePreviousStep = () => {
+    setStep((prevStep) => {
+      if (prevStep === 5) {
+        setClickedInfos([]);
+      }
+      return prevStep - 1;
+    });
+    if (step === 5) {
+      updateLineChartData();
+    }
+  };
+
+  const handleAddSearchBar = () => {
+    const searchBarsCount = [
+      showInputA,
+      showInputB,
+      showInputC,
+      showInputD,
+    ].filter(Boolean).length;
+    const searchResultsCount = [
+      searchResultA,
+      searchResultB,
+      searchResultC,
+      searchResultD,
+    ].filter(Boolean).length;
+    const totalCount = searchBarsCount + searchResultsCount;
+
+    if (totalCount < 4) {
+      if (!showInputC && !searchResultC) {
+        setShowInputC(true);
+      } else if (!showInputD && !searchResultD) {
+        setShowInputD(true);
+      }
+    }
+  };
+
+  const handleRemoveSearchBar = () => {
+    const searchBarsCount = [
+      showInputA,
+      showInputB,
+      showInputC,
+      showInputD,
+    ].filter(Boolean).length;
+    const searchResultsCount = [
+      searchResultA,
+      searchResultB,
+      searchResultC,
+      searchResultD,
+    ].filter(Boolean).length;
+    const totalCount = searchBarsCount + searchResultsCount;
+
+    if (totalCount > 2) {
+      if (showInputD) {
+        setShowInputD(false);
+        setSearchResultD(null);
+        setAssetSymbolD("");
+        setSearchStateD({
+          companyName: "",
+          hasSearched: false,
+          suggestions: [],
+        });
+      } else if (showInputC) {
+        setShowInputC(false);
+        setSearchResultC(null);
+        setAssetSymbolC("");
+        setSearchStateC({
+          companyName: "",
+          hasSearched: false,
+          suggestions: [],
+        });
+      }
+    }
+  };
+
+  const renderSearchBarControls = () => {
+    const searchBarsCount = [
+      showInputA,
+      showInputB,
+      showInputC,
+      showInputD,
+    ].filter(Boolean).length;
+    const searchResultsCount = [
+      searchResultA,
+      searchResultB,
+      searchResultC,
+      searchResultD,
+    ].filter(Boolean).length;
+    const totalCount = searchBarsCount + searchResultsCount;
+
+    return (
+      <div className="search-bar-controls">
+        {totalCount < 4 && (
+          <button onClick={handleAddSearchBar}>
+            <FontAwesomeIcon icon={faPlus} />
+          </button>
+        )}
+        {totalCount > 2 && (
+          <button onClick={handleRemoveSearchBar}>
+            <FontAwesomeIcon icon={faMinus} />
+          </button>
+        )}
       </div>
-      <div className="container-middle">
-        <div>
-          {!showNext ? (
-            <div>
-              <div className="controls">
-                {/* Buttons to show/hide content */}
-                <button
-                  ref={wrapperRefSelectAssets}
-                  onClick={handleSelectAssetsClick}
-                >
-                  Select assets
-                </button>
-                <button
-                  ref={wrapperRefStartDate}
-                  onClick={handleStartDateClick}
-                >
-                  Start date
-                </button>
-                <button ref={wrapperRefEndDate} onClick={handleEndDateClick}>
-                  End date
-                </button>
-                <button ref={wrapperRefInterval} onClick={handleIntervalClick}>
-                  Interval
-                </button>
-              </div>
-              <div className="chart-container">
-                <div>
-                  {showSelectAssets && (
-                    <div
-                      ref={wrapperRefSelectAssets}
-                      className={`select-assets-content ${
-                        showSelectAssets ? "visible" : ""
-                      }`}
-                    >
-                      {/* Asset A search input */}
-                      {showInputA && (
-                        <div ref={wrapperRefA}>
-                          <input
-                            type="text"
-                            value={searchStateA.companyName}
-                            onChange={handleInputChangeA}
-                            placeholder="Enter company name"
-                          />
-                          {/* Display search suggestions */}
-                          {searchStateA.suggestions.length > 0 && (
-                            <div className="suggestion-dropdown">
-                              <ul>
-                                {searchStateA.suggestions.map((item) => (
-                                  <li
-                                    key={item.symbol}
-                                    onClick={() =>
-                                      handleSuggestionClickA(
-                                        item.name,
-                                        item.symbol
-                                      )
-                                    }
-                                  >
-                                    {item.name} ({item.symbol})
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {/* Show search again button for Asset A */}
-                      {showSearchAgainButtonA && (
-                        <button
-                          onClick={() => {
-                            setShowInputA(true);
-                            setShowSearchAgainButtonA(false);
-                            setSearchResultA(null);
-                            setSearchWarningA("Please search for an asset");
-                          }}
-                        >
-                          Search Again
-                        </button>
-                      )}
-                      {/* Display search results or warning for Asset A */}
-                      {searchResultA && searchResultA.length > 0 ? (
-                        <div>
-                          <h2>Search Results:</h2>
-                          <ul>
-                            {searchResultA.map((item) => (
-                              <li key={item.symbol}>
-                                <strong>Name:</strong> {item.name}
-                                <strong>Symbol:</strong> {item.symbol}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : (
-                        <p>{searchWarningA}</p>
-                      )}
-                      {/* Asset B search input */}
-                      {showInputB && (
-                        <div ref={wrapperRefB}>
-                          <input
-                            type="text"
-                            value={searchStateB.companyName}
-                            onChange={handleInputChangeB}
-                            placeholder="Enter company name"
-                          />
-                          {/* Display search suggestions */}
-                          {searchStateB.suggestions.length > 0 && (
-                            <div className="suggestion-dropdown">
-                              <ul>
-                                {searchStateB.suggestions.map((item) => (
-                                  <li
-                                    key={item.symbol}
-                                    onClick={() =>
-                                      handleSuggestionClickB(
-                                        item.name,
-                                        item.symbol
-                                      )
-                                    }
-                                  >
-                                    {item.name} ({item.symbol})
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {/* Show search again button for Asset B */}
-                      {showSearchAgainButtonB && (
-                        <button
-                          onClick={() => {
-                            setShowInputB(true);
-                            setShowSearchAgainButtonB(false);
-                            setSearchResultB(null);
-                            setSearchWarningB("Please search for an asset");
-                          }}
-                        >
-                          Search Again
-                        </button>
-                      )}
-                      {/* Display search results or warning for Asset B */}
-                      {searchResultB && searchResultB.length > 0 ? (
-                        <div>
-                          <h2>Search Results:</h2>
-                          <ul>
-                            {searchResultB.map((item) => (
-                              <li key={item.symbol}>
-                                <strong>Name:</strong> {item.name}
-                                <strong>Symbol:</strong> {item.symbol}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : (
-                        <p>{searchWarningB}</p>
-                      )}
-                      {/* Asset C search input */}
-                      {showInputC && (
-                        <div ref={wrapperRefC}>
-                          <input
-                            type="text"
-                            value={searchStateC.companyName}
-                            onChange={handleInputChangeC}
-                            placeholder="Enter company name"
-                          />
-                          {/* Display search suggestions */}
-                          {searchStateC.suggestions.length > 0 && (
-                            <div className="suggestion-dropdown">
-                              <ul>
-                                {searchStateC.suggestions.map((item) => (
-                                  <li
-                                    key={item.symbol}
-                                    onClick={() =>
-                                      handleSuggestionClickC(
-                                        item.name,
-                                        item.symbol
-                                      )
-                                    }
-                                  >
-                                    {item.name} ({item.symbol})
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {/* Show search again button for Asset C */}
-                      {showSearchAgainButtonC && (
-                        <button
-                          onClick={() => {
-                            setShowInputC(true);
-                            setShowSearchAgainButtonC(false);
-                            setSearchResultC(null);
-                            setSearchWarningC("Please search for an asset");
-                          }}
-                        >
-                          Search Again
-                        </button>
-                      )}
-                      {/* Display search results or warning for Asset C */}
-                      {searchResultC && searchResultC.length > 0 ? (
-                        <div>
-                          <h2>Search Results:</h2>
-                          <ul>
-                            {searchResultC.map((item) => (
-                              <li key={item.symbol}>
-                                <strong>Name:</strong> {item.name}
-                                <strong>Symbol:</strong> {item.symbol}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : (
-                        <p>{searchWarningC}</p>
-                      )}
-                      {/* Asset D search input */}
-                      {showInputD && (
-                        <div ref={wrapperRefD}>
-                          <input
-                            type="text"
-                            value={searchStateD.companyName}
-                            onChange={handleInputChangeD}
-                            placeholder="Enter company name"
-                          />
-                          {/* Display search suggestions */}
-                          {searchStateD.suggestions.length > 0 && (
-                            <div className="suggestion-dropdown">
-                              <ul>
-                                {searchStateD.suggestions.map((item) => (
-                                  <li
-                                    key={item.symbol}
-                                    onClick={() =>
-                                      handleSuggestionClickD(
-                                        item.name,
-                                        item.symbol
-                                      )
-                                    }
-                                  >
-                                    {item.name} ({item.symbol})
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {/* Show search again button for Asset D */}
-                      {showSearchAgainButtonD && (
-                        <button
-                          onClick={() => {
-                            setShowInputD(true);
-                            setShowSearchAgainButtonD(false);
-                            setSearchResultD(null);
-                            setSearchWarningD("Please search for an asset");
-                          }}
-                        >
-                          Search Again
-                        </button>
-                      )}
-                      {/* Display search results or warning for Asset D */}
-                      {searchResultD && searchResultD.length > 0 ? (
-                        <div>
-                          <h2>Search Results:</h2>
-                          <ul>
-                            {searchResultD.map((item) => (
-                              <li key={item.symbol}>
-                                <strong>Name:</strong> {item.name}
-                                <strong>Symbol:</strong> {item.symbol}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : (
-                        <p>{searchWarningD}</p>
-                      )}
-                    </div>
-                  )}
-                  {showStartDate && (
-                    <div
-                      ref={wrapperRefStartDate}
-                      className="start-date-content visible"
-                    >
-                      <p>Please select a start date for the portfolio</p>
-                      <DatePicker
-                        selected={startDate}
-                        onChange={(date) => setStartDate(date)}
-                        placeholderText="Select start date"
-                        maxDate={yesterday}
-                        isClearable
+    );
+  };
+
+  const handleStartDateChange = (date) => {
+    setStartDate(date);
+    if (endDate && interval !== "Interval") {
+      setShouldRecalculate(true);
+    }
+  };
+
+  const handleEndDateChange = (date) => {
+    setEndDate(date);
+    if (startDate && interval !== "Interval") {
+      setShouldRecalculate(true);
+    }
+  };
+
+  const handleIntervalChange = (e) => {
+    setIntervals(e.target.value);
+    if (startDate && endDate) {
+      setShouldRecalculate(true);
+    }
+  };
+
+  const renderStepContent = () => {
+    switch (step) {
+      case 0:
+        return (
+          <div>
+            <div className="main-content">
+              <div className="select-assets-content">
+                <p className="instructions">
+                  Please insert at least 2 assets to continue, with the
+                  possibility to add up to 4 assets. The name of the company
+                  will appear in the search suggestions with the symbol in
+                  parentheses.
+                </p>
+                <div className="search-bar-container">
+                  {showInputA && (
+                    <div className="search-bar" ref={searchBarRefA}>
+                      <input
+                        type="text"
+                        value={searchStateA.companyName}
+                        onChange={handleInputChangeA}
+                        onFocus={handleInputFocusA}
+                        placeholder="Search for the first asset"
                       />
-                    </div>
-                  )}
-                  {showEndDate && (
-                    <div
-                      ref={wrapperRefEndDate}
-                      className="end-date-content visible"
-                    >
-                      <p>Please select an end date for the portfolio</p>
-                      <DatePicker
-                        selected={endDate}
-                        onChange={(date) => setEndDate(date)}
-                        placeholderText="Select end date"
-                        maxDate={today}
-                        isClearable
+                      <FontAwesomeIcon
+                        icon={faSearch}
+                        className="search-icon"
                       />
+                      {searchStateA.suggestions.length > 0 && (
+                        <div className="suggestion-dropdown">
+                          <ul>
+                            {searchStateA.suggestions.map((item) => (
+                              <li
+                                key={item.symbol}
+                                onClick={() =>
+                                  handleSuggestionClickA(item.name, item.symbol)
+                                }
+                              >
+                                {item.name} ({item.symbol})
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
-                <div>
-                  {showInterval && (
-                    <div
-                      ref={wrapperRefInterval}
-                      className="interval-content visible"
-                    >
-                      <p>Please select an interval for the portfolio</p>
-                      <div>
-                        {" "}
-                        <select
-                          value={interval}
-                          onChange={(e) => setInterval(e.target.value)}
-                        >
-                          <option value="Interval">Interval</option>
-                          <option value="1m">1 Minute</option>
-                          <option value="5m">5 Minutes</option>
-                          <option value="15m">15 Minutes</option>
-                          <option value="30m">30 Minutes</option>
-                          <option value="1hour">1 Hour</option>
-                          <option value="4hour">4 Hour</option>
-                          <option value="Daily">Daily</option>
-                        </select>
-                      </div>
+                  {searchResultA && searchResultA.length > 0 && (
+                    <div className="search-results">
+                      <ul className="search-results-list">
+                        {searchResultA.map((item) => (
+                          <li key={item.symbol} className="search-result-item">
+                            <span className="search-result-text">
+                              {item.name} ({item.symbol})
+                            </span>
+                            {!assetDataAvailability.A && (
+                              <FontAwesomeIcon
+                                icon={faExclamationTriangle}
+                                style={{
+                                  color: "red",
+                                  marginLeft: "10px",
+                                  marginBottom: "1px",
+                                }}
+                                title="Data for this asset is not available"
+                              />
+                            )}
+                            <button
+                              className="delete-button"
+                              onClick={() => {
+                                setShowInputA(true); // Show input field
+                                setSearchResultA(null);
+                                handleDeleteButtonClick(0); // Call recalculation with index 0
+                              }}
+                            >
+                              X
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
-                  <div className="return-chart">
-                    {Object.keys(lineChartData).length > 0 && (
-                      <Line data={lineChartData} options={options} />
-                    )}
-                  </div>
-                  <div className="buttons-container">
+                  {showInputB && (
+                    <div className="search-bar" ref={searchBarRefB}>
+                      <input
+                        type="text"
+                        value={searchStateB.companyName}
+                        onChange={handleInputChangeB}
+                        onFocus={handleInputFocusB}
+                        placeholder="Search for the second asset"
+                      />
+                      <FontAwesomeIcon
+                        icon={faSearch}
+                        className="search-icon"
+                      />
+                      {searchStateB.suggestions.length > 0 && (
+                        <div className="suggestion-dropdown">
+                          <ul>
+                            {searchStateB.suggestions.map((item) => (
+                              <li
+                                key={item.symbol}
+                                onClick={() =>
+                                  handleSuggestionClickB(item.name, item.symbol)
+                                }
+                              >
+                                {item.name} ({item.symbol})
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {searchResultB && searchResultB.length > 0 && (
+                    <div className="search-results">
+                      <ul className="search-results-list">
+                        {searchResultB.map((item) => (
+                          <li key={item.symbol} className="search-result-item">
+                            <span className="search-result-text">
+                              {item.name} ({item.symbol})
+                            </span>
+                            {!assetDataAvailability.B && (
+                              <FontAwesomeIcon
+                                icon={faExclamationTriangle}
+                                style={{
+                                  color: "red",
+                                  marginLeft: "10px",
+                                  marginBottom: "1px",
+                                }}
+                                title="Data for this asset is not available"
+                              />
+                            )}
+                            <button
+                              className="delete-button"
+                              onClick={() => {
+                                setShowInputB(true); // Show input field
+                                setSearchResultB(null);
+                                handleDeleteButtonClick(1); // Call recalculation with index 1
+                              }}
+                            >
+                              X
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {showInputC && (
+                    <div className="search-bar" ref={searchBarRefC}>
+                      <input
+                        type="text"
+                        value={searchStateC.companyName}
+                        onChange={handleInputChangeC}
+                        onFocus={handleInputFocusC}
+                        placeholder="Search for the third asset"
+                      />
+                      <FontAwesomeIcon
+                        icon={faSearch}
+                        className="search-icon"
+                      />
+                      {searchStateC.suggestions.length > 0 && (
+                        <div className="suggestion-dropdown">
+                          <ul>
+                            {searchStateC.suggestions.map((item) => (
+                              <li
+                                key={item.symbol}
+                                onClick={() =>
+                                  handleSuggestionClickC(item.name, item.symbol)
+                                }
+                              >
+                                {item.name} ({item.symbol})
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {searchResultC && searchResultC.length > 0 && (
+                    <div className="search-results">
+                      <ul className="search-results-list">
+                        {searchResultC.map((item) => (
+                          <li key={item.symbol} className="search-result-item">
+                            <span className="search-result-text">
+                              {item.name} ({item.symbol})
+                            </span>
+                            {!assetDataAvailability.C && (
+                              <FontAwesomeIcon
+                                icon={faExclamationTriangle}
+                                style={{
+                                  color: "red",
+                                  marginLeft: "10px",
+                                  marginBottom: "1px",
+                                }}
+                                title="Data for this asset is not available"
+                              />
+                            )}
+                            <button
+                              className="delete-button"
+                              onClick={() => {
+                                setShowInputC(true); // Show input field
+                                setSearchResultC(null);
+                                handleDeleteButtonClick(2); // Call recalculation with index 2
+                              }}
+                            >
+                              X
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {showInputD && (
+                    <div className="search-bar" ref={searchBarRefD}>
+                      <input
+                        type="text"
+                        value={searchStateD.companyName}
+                        onChange={handleInputChangeD}
+                        onFocus={handleInputFocusD}
+                        placeholder="Search for the fourth asset"
+                      />
+                      <FontAwesomeIcon
+                        icon={faSearch}
+                        className="search-icon"
+                      />
+                      {searchStateD.suggestions.length > 0 && (
+                        <div className="suggestion-dropdown">
+                          <ul>
+                            {searchStateD.suggestions.map((item) => (
+                              <li
+                                key={item.symbol}
+                                onClick={() =>
+                                  handleSuggestionClickD(item.name, item.symbol)
+                                }
+                              >
+                                {item.name} ({item.symbol})
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {searchResultD && searchResultD.length > 0 && (
+                    <div className="search-results">
+                      <ul className="search-results-list">
+                        {searchResultD.map((item) => (
+                          <li key={item.symbol} className="search-result-item">
+                            <span className="search-result-text">
+                              {item.name} ({item.symbol})
+                            </span>
+                            {!assetDataAvailability.D && (
+                              <FontAwesomeIcon
+                                icon={faExclamationTriangle}
+                                style={{
+                                  color: "red",
+                                  marginLeft: "10px",
+                                  marginBottom: "1px",
+                                }}
+                                title="Data for this asset is not available"
+                              />
+                            )}
+                            <button
+                              className="delete-button"
+                              onClick={() => {
+                                setShowInputD(true); // Show input field
+                                setSearchResultD(null);
+                                handleDeleteButtonClick(3); // Call recalculation with index 3
+                              }}
+                            >
+                              X
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {renderSearchBarControls()}
+                  <div className="button-container-assets">
                     <button
                       onClick={handleClearButtonClick}
-                      className="btn clear"
+                      className="btn reset-btn-assets"
                     >
-                      Clear
+                      Reset
                     </button>
-                    {buttonNextDisabled ? (
-                      <button
-                        disabled={buttonNextDisabled}
-                        className="btn next"
-                      >
-                        Next
-                      </button>
-                    ) : (
-                      <button
-                        onClick={handleNextButtonClick}
-                        className="btn next"
-                      >
-                        Next
-                      </button>
-                    )}
+                    {(assetSymbolA ||
+                      assetSymbolB ||
+                      assetSymbolC ||
+                      assetSymbolD) &&
+                      (assetSymbolA ? 1 : 0) +
+                        (assetSymbolB ? 1 : 0) +
+                        (assetSymbolC ? 1 : 0) +
+                        (assetSymbolD ? 1 : 0) >=
+                        2 && (
+                        <div className="assets-next">
+                          <button className="btn" onClick={handleNextStep}>
+                            Next
+                          </button>
+                        </div>
+                      )}
                   </div>
                 </div>
               </div>
             </div>
-          ) : (
+          </div>
+        );
+      case 1:
+        return (
+          <div className="main-content">
+            <div className="start-date-content visible">
+              <p className="instructions">
+                {`\u00A0\u00A0Please select the start date for your investment portfolio.\u00A0`}
+              </p>
+              <div className="date-picker-wrapper">
+                <DatePicker
+                  selected={startDate}
+                  onChange={handleStartDateChange} // Updated
+                  placeholderText="Select start date"
+                  maxDate={new Date()}
+                  className="date-picker-input"
+                />
+                <FontAwesomeIcon
+                  icon={faCalendarAlt}
+                  className="calendar-icon"
+                />
+              </div>
+              <div className="button-container">
+                <div>
+                  <button onClick={handlePreviousStep} className="btn back-btn">
+                    Back{" "}
+                  </button>
+                  {(!assetDataAvailability.A ||
+                    !assetDataAvailability.B ||
+                    !assetDataAvailability.C ||
+                    !assetDataAvailability.D) && (
+                    <FontAwesomeIcon
+                      icon={faExclamationTriangle}
+                      style={{
+                        color: "red",
+                        marginLeft: "2px",
+                      }}
+                      title="One of the assets has no data"
+                    />
+                  )}
+                </div>
+                <button
+                  onClick={handleClearButtonClick}
+                  className="btn reset-btn"
+                >
+                  Reset
+                </button>
+
+                {startDate && (
+                  <button onClick={handleNextStep} className="btn next-btn">
+                    Next
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      case 2:
+        return (
+          <div className="main-content">
+            <div className="end-date-content visible">
+              <p className="instructions">
+                {`\u00A0\u00A0Please select the end date for your investment portfolio.\u00A0\u00A0`}
+              </p>
+              <div className="date-picker-wrapper">
+                <DatePicker
+                  selected={endDate}
+                  onChange={handleEndDateChange} // Updated
+                  placeholderText="Select end date"
+                  maxDate={new Date()}
+                  className="date-picker-input"
+                />
+                <FontAwesomeIcon
+                  icon={faCalendarAlt}
+                  className="calendar-icon"
+                />
+              </div>
+              <div className="button-container">
+                <div>
+                  <button onClick={handlePreviousStep} className="btn back-btn">
+                    Back
+                  </button>
+                  <button
+                    onClick={handleClearButtonClick}
+                    className="btn reset-btn"
+                  >
+                    Reset
+                  </button>
+
+                  {(!assetDataAvailability.A ||
+                    !assetDataAvailability.B ||
+                    !assetDataAvailability.C ||
+                    !assetDataAvailability.D) && (
+                    <FontAwesomeIcon
+                      icon={faExclamationTriangle}
+                      style={{ color: "red", marginLeft: "2px" }}
+                      title="One of the assets has no data"
+                    />
+                  )}
+                </div>
+                {endDate && (
+                  <button onClick={handleNextStep} className="btn next-btn">
+                    Next
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      case 3:
+        return (
+          <div className="main-content">
+            <div className="interval-content visible">
+              <p className="instructions">
+                Please select an interval for your investment portfolio data.
+              </p>
+              <div className="select-wrapper">
+                <select
+                  value={interval}
+                  onChange={handleIntervalChange} // Updated
+                  className="interval-select"
+                >
+                  <option hidden>Interval</option>
+                  <option value="1m">1 Minute</option>
+                  <option value="5m">5 Minutes</option>
+                  <option value="15m">15 Minutes</option>
+                  <option value="30m">30 Minutes</option>
+                  <option value="1hour">1 Hour</option>
+                  <option value="4hour">4 Hour</option>
+                  <option value="Daily">Daily</option>
+                </select>
+              </div>
+              <div className="button-container-interval">
+                <div>
+                  <button onClick={handlePreviousStep} className="btn back-btn">
+                    Back
+                  </button>
+                  <button
+                    onClick={handleClearButtonClick}
+                    className="btn reset-btn"
+                  >
+                    Reset
+                  </button>
+
+                  {(!assetDataAvailability.A ||
+                    !assetDataAvailability.B ||
+                    !assetDataAvailability.C ||
+                    !assetDataAvailability.D) && (
+                    <FontAwesomeIcon
+                      icon={faExclamationTriangle}
+                      style={{ color: "red", marginLeft: "2px" }}
+                      title="One of the assets has no data"
+                    />
+                  )}
+                </div>
+                <button
+                  onClick={handleNextStep}
+                  className="btn next-btn"
+                  disabled={
+                    !assetDataAvailability.A ||
+                    !assetDataAvailability.B ||
+                    !assetDataAvailability.C ||
+                    !assetDataAvailability.D
+                  }
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="main-content-summary">
+            <div className="summary-content visible">
+              <div className="summary-details">
+                <p>
+                  <strong>Assets:</strong>{" "}
+                  {[assetSymbolA, assetSymbolB, assetSymbolC, assetSymbolD]
+                    .filter(Boolean)
+                    .join(", ")}
+                </p>
+                <p>
+                  <strong>Start Date:</strong> {formatDate(startDate)}
+                </p>
+                <p>
+                  <strong>End Date:</strong> {formatDate(endDate)}
+                </p>
+                <p>
+                  <strong>Interval:</strong> {interval}
+                </p>
+              </div>
+              <div className="return-chart-container">
+                {Object.keys(lineChartData).length > 0 && (
+                  <Line data={lineChartData} options={options} />
+                )}
+              </div>
+              <div className="button-container-summary">
+                <button onClick={handlePreviousStep} className="btn back-btn">
+                  Back
+                </button>
+                <button
+                  onClick={handleClearButtonClick}
+                  className="btn reset-btn"
+                >
+                  Reset
+                </button>
+                <button onClick={handleNextStep} className="btn next-btn">
+                  Go to Monte Carlo chart
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 5:
+        return (
+          <div className="main-content">
             <div className="monte-carlo-chart">
               <div className="chart-container-monte-carlo">
                 <canvas
                   ref={chartContainerRef}
-                  width="400"
-                  height="400"
+                  width="800"
+                  height="800"
                 ></canvas>
-                <div className="btn-back-container">
-                  <button className="btn back" onClick={handleNextButtonClick}>
+                <div className="button-container-monte-carlo">
+                  <button className="btn back" onClick={handlePreviousStep}>
                     Back
                   </button>
                 </div>
@@ -2181,211 +2071,89 @@ export default function DashboardInvest() {
                       >
                         Delete
                       </button>
-                      <button className="btn save">Save</button>
-                      <button className="btn buy">Buy</button>
+                      <button
+                        className="btn save"
+                        onClick={() => handleSavePortfolio(clickedInfo)}
+                      >
+                        Save
+                      </button>
+                      <button className="btn buy" disabled>
+                        Buy
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-          )}
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="dashboard">
+      <div className="sidebar">
+        <div className="profile">
+          <img src={portrait} alt=""></img>
+          <span className="username" placeholder="">
+            {username || "\u00A0"}
+          </span>
+        </div>
+        <nav className="menu">
+          <Link to="/dashboard" className="menu-item">
+            <FontAwesomeIcon icon={faHome} className="menu-icon" /> Dashboard
+          </Link>
+          <Link to="/dashboard/invest" className="menu-item active">
+            <FontAwesomeIcon icon={faChartLine} className="menu-icon" /> Invest
+          </Link>
+          <Link to="/dashboard/watchlist" className="menu-item">
+            <FontAwesomeIcon icon={faEye} className="menu-icon" /> Watchlist
+          </Link>
+          <Link to="/dashboard/portfolios" className="menu-item">
+            <FontAwesomeIcon icon={faFolder} className="menu-icon" /> Portfolios
+          </Link>
+        </nav>
+        <div className="bottom-links">
+          <Link to="/dashboard/profile" className="menu-item">
+            <FontAwesomeIcon icon={faUser} className="menu-icon" /> Profile
+          </Link>
+          <div className="menu-item" onClick={toggleModal}>
+            <FontAwesomeIcon icon={faSignOutAlt} className="menu-icon" /> Log
+            out
+          </div>
         </div>
       </div>
-      {/* Profile information and navigation */}
-      <div className="profile">
-        <div className="username">{username}</div>
-        <img src={portrait} alt=" "></img>
+      <div className="main-content">
+        <div className="app-title-container">
+          <div className="app-title">
+            <Link to="/" className="custom-link">
+              <h3>Placeholder</h3>
+            </Link>
+          </div>
+        </div>
+        <div className="content">{renderStepContent()}</div>
       </div>
-      {/* Navigation links */}
-      <div className="containers-left">
-        {/* Dashboard links */}
-        <div className="first-container">
-          <Link to="/dashboard" className="custom-link">
-            <h3 className="first-container-text">Dashboard</h3>
-          </Link>
-        </div>
-        {/* Investment-related links */}
-        <div className="second-container">
-          {/* Highlighted "Invest" link */}
-          <Link to="/dashboard/invest" className="custom-link">
-            <h4
-              className="second-container-text"
-              style={{ backgroundColor: "rgb(161, 161, 161)" }}
-            >
-              Invest
-            </h4>
-          </Link>
-          <Link to="/dashboard/watchlist" className="custom-link">
-            <h4 className="second-container-text">Watchlist</h4>
-          </Link>
-          <Link to="/dashboard/portfolios" className="custom-link">
-            <h4 className="second-container-text">Portfolios</h4>
-          </Link>
-        </div>
-        {/* Profile and logout links */}
-        <div className="third-container">
-          <Link to="/dashboard/profile" className="custom-link">
-            <h4 className="third-container-text">Profile</h4>
-          </Link>
-          <h4 className="third-container-text" onClick={toggleModal}>
-            Log out
-          </h4>
-        </div>
-        {/* Logout confirmation modal */}
+      {modal && (
         <div className="modal-container">
-          {modal && (
-            <div className="modal">
-              <div onClick={toggleModal} className="overlay"></div>
-              <div className="modal-content">
-                <h2>Are you sure you want to log out?</h2>
-                <Link to="/" className="custom-link">
-                  <button className="modal-yes-btn" onClick={handleLogout}>
-                    Yes
-                  </button>
-                </Link>
-                <button className="modal-no-btn" onClick={toggleModal}>
-                  No
+          <div className="modal">
+            <div onClick={toggleModal} className="overlay"></div>
+            <div className="modal-content">
+              <h2>Are you sure you want to log out?</h2>
+              <Link to="/" className="custom-link">
+                <button className="btn modal-yes-btn" onClick={handleLogout}>
+                  Yes
                 </button>
-              </div>
+              </Link>
+              <button className="btn modal-no-btn" onClick={toggleModal}>
+                No
+              </button>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
-
-// Function to handle saving data for a single asset portfolio
-// const handleSavedDataOneAsset = async () => {
-//   const firstAssetName =
-//     searchResultA.length > 0 ? searchResultA[0].name : "";
-//   const data = {
-//     assets: 1,
-//     firstAsset: firstAssetName,
-//   };
-//   setSavedData([data]);
-
-//   try {
-//     const response = await axios.post(
-//       "http://localhost:3002/save-data-portfolio",
-//       {
-//         username: username,
-//         savedData: savedData,
-//       }
-//     );
-//     if (response.status === 200) {
-//       console.log("Data saved successfully");
-//     }
-//   } catch (error) {
-//     console.error("Error saving risk array:", error.message);
-//   }
-// };
-
-// Function to handle saving data for a two asset portfolio
-// const handleSavedDataTwoAssets = async () => {
-//   const firstAssetName =
-//     searchResultA.length > 0 ? searchResultA[0].name : "";
-//   const secondAssetName =
-//     searchResultA.length > 0 ? searchResultB[0].name : "";
-//   const data = {
-//     assets: 2,
-//     firstAsset: firstAssetName,
-//     secondAsset: secondAssetName,
-//   };
-//   setSavedData([data]);
-
-//   try {
-//     const response = await axios.post(
-//       "http://localhost:3002/save-data-portfolio",
-//       {
-//         username: username,
-//         savedData: savedData,
-//       }
-//     );
-//     if (response.status === 200) {
-//       console.log("Data saved successfully");
-//     }
-//   } catch (error) {
-//     console.error("Error saving risk array:", error.message);
-//   }
-// };
-
-// Fetch search results for asset A
-// useEffect(() => {
-//   if (!searchStateA.hasSearched || !searchStateA.companyName) return; // Return if search not performed or company name empty
-
-//   fetch(searchApiUrl) // Fetching data from API
-//     .then((response) => {
-//       if (!response.ok) {
-//         throw new Error(`HTTP error! status: ${response.status}`); // Handling HTTP error
-//       }
-//       return response.json(); // Parsing response as JSON
-//     })
-//     .then((data) => {
-//       if (!data) {
-//         console.error("Error: Data is null"); // Handling null data
-//         setSearchResultA(null); // Setting search result to null
-//         setSearchWarningB("No matching company found."); // Setting search warning
-//         return;
-//       }
-
-//       const foundItem = data.find((item) => {
-//         if (!item || !item.name) return false;
-//         return item.name
-//           .toLowerCase()
-//           .includes(searchStateA.companyName.toLowerCase()); // Checking for matching company name
-//       });
-
-//       setSearchResultA(foundItem ? [foundItem] : []); // Setting search result
-//       setAssetSymbolA(foundItem ? foundItem.symbol : ""); // Setting asset symbol
-//       setSearchStateA({
-//         ...searchStateA,
-//         hasSearched: false,
-//       }); // Resetting search state
-//       setSearchWarningA(""); // Clearing search warning
-//     })
-//     .catch((error) => {
-//       console.error("Error fetching data:", error); // Handling fetch error
-//       setSearchResultA(null); // Setting search result to null
-//     });
-// }, [searchApiUrl, searchStateA]); // Dependencies for useEffect hook
-
-// Fetch search results for asset B
-// useEffect(() => {
-//   if (!searchStateB.hasSearched || !searchStateB.companyName) return; // Return if search not performed or company name empty
-
-//   fetch(searchApiUrl) // Fetching data from API
-//     .then((response) => {
-//       if (!response.ok) {
-//         throw new Error(`HTTP error! status: ${response.status}`); // Handling HTTP error
-//       }
-//       return response.json(); // Parsing response as JSON
-//     })
-//     .then((data) => {
-//       if (!data) {
-//         console.error("Error: Data is null"); // Handling null data
-//         setSearchResultB(null); // Setting search result to null
-//         setSearchWarningB("No matching company found."); // Setting search warning
-//         return;
-//       }
-
-//       const foundItem = data.find((item) => {
-//         if (!item || !item.name) return false;
-//         return item.name
-//           .toLowerCase()
-//           .includes(searchStateB.companyName.toLowerCase()); // Checking for matching company name
-//       });
-
-//       setSearchResultB(foundItem ? [foundItem] : []); // Setting search result
-//       setAssetSymbolB(foundItem ? foundItem.symbol : ""); // Setting asset symbol
-//       setSearchStateB({
-//         ...searchStateB,
-//         hasSearched: false,
-//       }); // Resetting search state
-//       setSearchWarningB(""); // Clearing search warning
-//     })
-//     .catch((error) => {
-//       console.error("Error fetching data:", error); // Handling fetch error
-//       setSearchResultA(null); // Setting search result to null
-//     });
-// }, [searchApiUrl, searchStateB]); // Dependencies for useEffect hook

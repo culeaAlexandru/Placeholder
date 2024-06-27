@@ -1,3 +1,4 @@
+/* Home Page After Login */
 :root {
   --secondary-bg: #fff;
   --secondary-text-color: #cecece;
@@ -6,74 +7,110 @@
 }
 
 .home-page-logged {
-  font-family: "Gill Sans", sans-serif;
+  font-family: "Roboto", sans-serif;
 }
 
 .home-page-logged .header {
-  background-color: #d1e1fd;
+  background-color: rgba(224, 224, 224, 0.712);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
-  border-bottom-style: ridge;
+  justify-content: space-between; /* Added */
   align-items: center;
   height: 100px;
-  padding-top: 0;
+  padding: 0 5px; /* Adjusted padding */
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
+  z-index: 1000;
 }
 
-.home-page-logged .username {
-  text-align: center;
+.home-page-logged .page-title {
   margin: 0;
-  margin-right: auto;
-  margin-top: 14px;
-  margin-bottom: 14px;
-  font-size: 18px;
+  font-size: 24px;
+  color: #333;
+  margin-left: 20px;
+}
+
+.home-page-logged .nav-menu {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  margin-right: 50px;
 }
 
 .home-page-logged .menu-trigger img {
-  position: absolute;
-  top: 20px;
-  right: 30px;
-  height: 60px;
-  width: 60px;
+  height: 50px;
+  width: 50px;
   border-radius: 50%;
-  overflow: hidden;
   cursor: pointer;
+  border: 2px solid #eaeaea;
+  transition: border-color 0.3s;
+}
+
+.home-page-logged .menu-trigger img:hover {
+  border-color: #007bff;
 }
 
 .home-page-logged .dropdown-menu {
   position: absolute;
-  top: 95px;
+  top: 87px;
   right: 29px;
   background-color: #ffffff;
   border-radius: var(--border-radius);
   width: 230px;
-}
-
-.home-page-logged .dropdown-menu::before {
-  content: " ";
-  position: absolute;
-  top: -5px;
-  right: 20px;
-  height: 20px;
-  width: 20px;
-  background: var(--secondary-bg);
-  transform: rotate(45deg);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+  transform: translateY(-10px);
+  opacity: 0;
+  visibility: hidden;
 }
 
 .home-page-logged .dropdown-menu.active {
+  transform: translateY(0);
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
-  transition: var(--speed) ease;
 }
 
 .home-page-logged .dropdown-menu.inactive {
   opacity: 0;
   visibility: hidden;
   transform: translateY(-20px);
-  transition: var(--speed) ease;
+}
+
+.home-page-logged .dropdown-menu::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  right: 43px;
+  border-width: 10px;
+  border-style: solid;
+  border-color: transparent transparent #ffffff transparent;
+}
+
+.home-page-logged .username {
+  text-align: center;
+  padding: 10px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.home-page-logged .dropdown-links1 ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.home-page-logged .dropdown-links1 .dropdown-links {
+  display: block;
+  padding: 10px 20px;
+  color: #333;
+  text-decoration: none;
+  transition: background-color 0.3s;
+}
+
+.home-page-logged .dropdown-links1 .dropdown-links:hover {
+  background-color: #f7f7f7;
 }
 
 .home-page-logged h3 {
@@ -120,20 +157,4 @@
 .home-page-logged .dropdown-menu ul li:hover img {
   opacity: 1;
   cursor: pointer;
-}
-
-.home-page-logged .risk-output {
-  position: fixed;
-  top: 450px;
-  left: 105px;
-}
-
-.home-page-logged .data-container {
-  padding-left: 100px;
-}
-
-.home-page-logged h2 {
-  margin: 0;
-  margin-right: auto;
-  margin-left: 100px;
 }

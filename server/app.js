@@ -6,7 +6,9 @@ const bcrypt = require("bcrypt");
 const session = require("express-session");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
-const PortfolioAllocation = require("portfolio-allocation");
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const multer = require("multer");
 
 // Middleware setup
 app.use(express.json());
@@ -40,6 +42,29 @@ const client = new MongoClient(uri, {
 // Number of salt rounds for bcrypt hashing
 const saltRounds = 10;
 
+// Cloudinary configuration
+cloudinary.config({
+  cloud_name: "slaponia",
+  api_key: "863639221347982",
+  api_secret: "EUxMNrqgNg4IQkw1GJL8OPRkoOU",
+});
+
+// Configure Multer and Cloudinary Storage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    const username = req.body.UserName;
+    const extension = file.mimetype.split("/")[1]; // Get the file extension from mimetype
+    return {
+      folder: `photos/${username}`,
+      format: extension, // Use the file's original format
+      public_id: file.originalname.split(".")[0],
+    };
+  },
+});
+
+const upload = multer({ storage: storage });
+
 // Start the server
 app.listen(3002, () => {
   console.log("Server is running on port 3002");
@@ -61,10 +86,17 @@ async function connectToMongo() {
 connectToMongo();
 
 // Endpoint for user registration
-app.post("/register", async (req, res) => {
+app.post("/register", upload.single("CIPhoto"), async (req, res) => {
   const sentEmail = req.body.Email;
   const sentUsername = req.body.UserName;
   const sentPassword = req.body.Password;
+  const sentFirstName = req.body.FirstName;
+  const sentLastName = req.body.LastName;
+  const sentPronoun = req.body.Pronoun;
+  const sentCountry = req.body.Country;
+  const sentAdress = req.body.Adress;
+  const sentPhoneNumber = req.body.PhoneNumber;
+  const setCIPhoto = req.file.path;
 
   try {
     // Check if email or username already exists
@@ -92,9 +124,16 @@ app.post("/register", async (req, res) => {
         email: sentEmail,
         username: sentUsername,
         password: hash,
-        verified: false,
-        riskA: 0,
-        riskB: 0,
+        firstName: sentFirstName,
+        lastName: sentLastName,
+        pronoun: sentPronoun,
+        country: sentCountry,
+        adress: sentAdress,
+        phoneNumber: sentPhoneNumber,
+        CIPhoto: setCIPhoto,
+        emailVerified: false,
+        adminVerified: "Waiting",
+        admin: false,
         createdAt: new Date(),
       };
 
@@ -167,6 +206,68 @@ app.get("/verify/:token", (req, res) => {
   }
 });
 
+app.get("/admin/verify-requests", async (req, res) => {
+  try {
+    const users = await client
+      .db("portfolio_login_db")
+      .collection("users")
+      .find({ adminVerified: "Waiting", emailVerified: true })
+      .toArray();
+
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+const deleteFolder = async (folderPath) => {
+  try {
+    // Delete all resources in the folder
+    await cloudinary.api.delete_resources_by_prefix(folderPath);
+    console.log(`Resources in folder ${folderPath} deleted from Cloudinary`);
+
+    // Delete the folder itself
+    await cloudinary.api.delete_folder(folderPath);
+    console.log(`Folder ${folderPath} deleted from Cloudinary`);
+  } catch (error) {
+    console.error("Error deleting folder from Cloudinary:", error);
+  }
+};
+
+app.post("/admin/update-verify-status", async (req, res) => {
+  const { email, status } = req.body;
+
+  try {
+    const user = await client
+      .db("portfolio_login_db")
+      .collection("users")
+      .findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.CIPhoto) {
+      const username = user.username; // Extract the username
+      const folderPath = `photos/${username}`;
+      await deleteFolder(folderPath);
+    }
+
+    const result = await client
+      .db("portfolio_login_db")
+      .collection("users")
+      .updateOne({ email }, { $set: { adminVerified: status, CIPhoto: null } });
+
+    if (result.modifiedCount === 1) {
+      res.status(200).json({ message: "Status updated successfully" });
+    } else {
+      res.status(500).json({ message: "Failed to update status" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Endpoint for user login
 app.post("/login", async (req, res) => {
   const sentLoginUsername = req.body.LoginUserName;
@@ -179,7 +280,28 @@ app.post("/login", async (req, res) => {
       .collection("users")
       .findOne({ username: sentLoginUsername });
 
-    if (user && user.verified) {
+    if (user) {
+      // Check if the user has verified their email
+      if (!user.emailVerified) {
+        return res.send({ message: "Email not verified", isLoggedIn: false });
+      }
+
+      // Check if the user has been rejected by the admin
+      if (user.adminVerified === "Rejected") {
+        return res.send({
+          message: "Admin approval rejected",
+          isLoggedIn: false,
+        });
+      }
+
+      // Check if the user is approved by the admin
+      if (user.adminVerified !== "Accepted") {
+        return res.send({
+          message: "Admin approval pending",
+          isLoggedIn: false,
+        });
+      }
+
       // Compare passwords
       const match = await bcrypt.compare(setLoginPassword, user.password);
 
@@ -193,13 +315,14 @@ app.post("/login", async (req, res) => {
           results: user,
           username: user.username,
           isLoggedIn: true,
-          isVerified: user.verified,
+          isVerified: user.emailVerified,
+          isAdminApproved: user.adminVerified === "Accepted",
         });
       } else {
         res.send({ message: "Credentials error", isLoggedIn: false });
       }
     } else {
-      res.send({ message: "User not verified", isLoggedIn: false });
+      res.send({ message: "Credentials error", isLoggedIn: false });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -207,9 +330,27 @@ app.post("/login", async (req, res) => {
 });
 
 // Endpoint to check if user is logged in
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
   if (req.session && req.session.LoginUserName) {
-    res.send({ valid: true, username: req.session.LoginUserName });
+    try {
+      const user = await client
+        .db("portfolio_login_db")
+        .collection("users")
+        .findOne({ username: req.session.LoginUserName });
+
+      if (user) {
+        res.send({
+          valid: true,
+          username: user.username,
+          admin: user.admin, // Include admin status
+          CIPhoto: user.CIPhoto, // Include CI Photo URL
+        });
+      } else {
+        res.send({ valid: false });
+      }
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   } else {
     res.send({ valid: false });
   }
@@ -226,51 +367,6 @@ app.get("/logout", (req, res) => {
       res.send("Logged out successfully");
     }
   });
-});
-
-// Endpoint to save user's risk values
-app.post("/save-risk", async (req, res) => {
-  const { username, riskValueA, riskValueB } = req.body;
-
-  try {
-    // Update user's risk values
-    await client
-      .db("portfolio_login_db")
-      .collection("users")
-      .updateOne(
-        { username: username },
-        { $set: { riskA: parseInt(riskValueA), riskB: parseInt(riskValueB) } }
-      );
-
-    console.log("Risk value updated successfully");
-    res.sendStatus(200);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Endpoint to get user's risk values
-app.post("/get-risk", async (req, res) => {
-  const { username } = req.body;
-
-  try {
-    // Find user by username and send risk values
-    const user = await client
-      .db("portfolio_login_db")
-      .collection("users")
-      .findOne({ username: username });
-
-    if (user) {
-      console.log("Risk value fetched successfully:", user.riskA, user.riskB);
-      res.status(200).json({ riskA: user.riskA, riskB: user.riskB });
-    } else {
-      console.error("User not found");
-      res.sendStatus(404);
-    }
-  } catch (error) {
-    console.error("Error fetching risk value:", error.message);
-    res.status(500).json({ error: error.message });
-  }
 });
 
 // Route for saving an asset to a user's account
@@ -332,47 +428,51 @@ app.get("/saved-assets/:username", async (req, res) => {
 // Route for saving portfolio data to a user's account
 app.post("/save-data-portfolio", async (req, res) => {
   const { username, savedData } = req.body;
-  const subArraySize = 3; // Maximum sub-array size
 
   try {
-    // Retrieve user data from the database
     const userData = await client
       .db("portfolio_login_db")
       .collection("users")
       .findOne({ username: username });
-
-    // If user does not exist, return error
     if (!userData) {
       res.status(404).json({ error: "User not found" });
       return;
     }
 
-    // Check if maximum sub-array size for portfolios is reached
-    if (userData.Portfolios && userData.Portfolios.length >= subArraySize) {
-      console.log("Maximum sub-array size reached");
-      res.sendStatus(204);
-      return;
+    // Prepare the portfolio data to be saved
+    const data = {
+      asset1Name: savedData.asset1Name,
+      asset1Percent: savedData.asset1Percent,
+      asset2Name: savedData.asset2Name,
+      asset2Percent: savedData.asset2Percent,
+      expectedReturn: savedData.expectedReturn,
+      risk: savedData.risk,
+      bestOutcome: savedData.bestOutcome,
+      dateCreated: new Date(savedData.dateCreated),
+      dateUpdated: new Date(savedData.dateUpdated),
+      startDate: savedData.startDate,
+      endDate: savedData.endDate,
+      interval: savedData.interval,
+    };
+
+    // Conditionally add asset3 and asset4 if they exist
+    if (savedData.asset3Name && savedData.asset3Percent) {
+      data.asset3Name = savedData.asset3Name;
+      data.asset3Percent = savedData.asset3Percent;
     }
 
-    // Calculate remaining slots for portfolio data
-    const remainingSlots =
-      subArraySize - (userData.Portfolios ? userData.Portfolios.length : 0);
-    const dataToPush = savedData.slice(0, remainingSlots);
+    if (savedData.asset4Name && savedData.asset4Percent) {
+      data.asset4Name = savedData.asset4Name;
+      data.asset4Percent = savedData.asset4Percent;
+    }
 
-    // Update the user's portfolio data
+    console.log("Data being saved to database:", data);
+
     const updateResult = await client
       .db("portfolio_login_db")
       .collection("users")
-      .updateOne(
-        { username: username },
-        {
-          $push: {
-            Portfolios: { $each: dataToPush },
-          },
-        }
-      );
+      .updateOne({ username: username }, { $push: { Portfolios: data } });
 
-    // Check if portfolio data was updated successfully
     if (updateResult.modifiedCount > 0) {
       console.log("Portfolio data updated successfully");
       res.sendStatus(200);
@@ -407,11 +507,80 @@ app.post("/get-portfolio-data", async (req, res) => {
   }
 });
 
+// Endpoint for deleting a portfolio
+app.post("/delete-portfolio", async (req, res) => {
+  const { username, portfolioIndex } = req.body;
+
+  try {
+    // Find the user in the database
+    const user = await client
+      .db("portfolio_login_db")
+      .collection("users")
+      .findOne({ username: username });
+
+    if (!user || !user.Portfolios || user.Portfolios.length <= portfolioIndex) {
+      return res.status(404).json({ message: "Portfolio not found" });
+    }
+
+    // Remove the portfolio at the specified index
+    const updatedPortfolios = user.Portfolios.filter(
+      (_, i) => i !== portfolioIndex
+    );
+
+    // Update the user's portfolios in the database
+    await client
+      .db("portfolio_login_db")
+      .collection("users")
+      .updateOne(
+        { username: username },
+        { $set: { Portfolios: updatedPortfolios } }
+      );
+
+    console.log(`Portfolio at index ${portfolioIndex} deleted successfully`);
+    res.status(200).json({ message: "Portfolio deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Route for deleting a saved asset from a user's account
+app.post("/delete-saved-asset", async (req, res) => {
+  const { username, assetSymbol } = req.body;
+
+  try {
+    // Find the user in the database
+    const user = await client
+      .db("portfolio_login_db")
+      .collection("users")
+      .findOne({ username: username });
+
+    // Check if the asset is saved for the user
+    if (user && user.savedAssets && user.savedAssets.includes(assetSymbol)) {
+      // Update the user's saved assets
+      await client
+        .db("portfolio_login_db")
+        .collection("users")
+        .updateOne(
+          { username: username },
+          { $pull: { savedAssets: assetSymbol } }
+        );
+
+      console.log("Asset deleted successfully");
+      res.sendStatus(200);
+    } else {
+      res.status(404).json({ message: "Asset not found in saved assets." });
+    }
+  } catch (error) {
+    console.error("Error deleting asset:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Route for saving profile data to a user's account
 app.post("/save-data-profile", async (req, res) => {
   const {
     username,
-    userData: { firstName, secondName, country, currency, pronun },
+    userData: { firstName, lastName, country, currency, pronoun },
   } = req.body;
 
   try {
@@ -427,10 +596,10 @@ app.post("/save-data-profile", async (req, res) => {
           },
           $set: {
             firstName: firstName,
-            secondName: secondName,
+            lastName: lastName,
             country: country,
             currency: currency,
-            pronun: pronun,
+            pronoun: pronoun,
           },
         },
         { upsert: true }

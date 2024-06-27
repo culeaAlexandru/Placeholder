@@ -6,17 +6,9 @@ import "../Home-page-loggedIn.css";
 import portrait from "../imgs/default-pp.jpg";
 
 export default function Homepage() {
-  // State variables to manage login status, slider value, slider visibility, interaction, Log out modal visibility, username, and chart data
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  // const [sliderValue, setSliderValue] = useState(0);
-  // const [isSliderVisible, setIsSliderVisible] = useState(false);
-  // const [isSliderInteracted, setIsSliderInteracted] = useState(false);
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState("");
-  // Navigation hook
-  // const navigate = useNavigate();
-
-  // Set axios default credentials to true
   axios.defaults.withCredentials = true;
 
   // Effect hook to check if the user is logged in when the component mounts
@@ -56,54 +48,6 @@ export default function Homepage() {
       });
   };
 
-  // Function to handle slider input
-  // const handleSliderInput = (e) => {
-  //   const value = parseInt(e.target.value, 10);
-  //   setSliderValue(value);
-  //   showValue();
-  //   setIsSliderInteracted(true);
-  //   sessionStorage.setItem("riskValue", value);
-  // };
-
-  // Functions to handle slider mouse events
-  // const handleSliderMouseDown = () => {
-  //   showValue();
-  // };
-
-  // const handleSliderMouseUp = () => {
-  //   hideValue();
-  //   console.log(sliderValue);
-  // };
-
-  // const handleSliderMouseOut = (e) => {
-  //   const isSliderElement = e.relatedTarget.id === "mySlider";
-  //   const isValueElement = e.relatedTarget.id === "slider-value";
-
-  //   if (!isSliderElement && !isValueElement) {
-  //     hideValue();
-  //   }
-  // };
-
-  // const showValue = () => {
-  //   setIsSliderVisible(true);
-  // };
-
-  // const hideValue = () => {
-  //   setIsSliderVisible(false);
-  // };
-
-  // Function to set slider position styles
-  // const sliderPosition = (sliderValue / 10) * 100;
-  // const sliderStyles = {
-  //   left: `${sliderPosition}%`,
-  //   display: isSliderVisible ? "block" : "none",
-  // };
-
-  // // Styles for slider text position
-  // const pStyles = isSliderVisible
-  //   ? { position: "relative", bottom: "50px" }
-  //   : {};
-
   // Ref for dropdown menu
   const menuRef = useRef(null);
   useEffect(() => {
@@ -117,88 +61,6 @@ export default function Homepage() {
       document.removeEventListener("mousedown", handler);
     };
   }, [menuRef]);
-
-  // Effect hook to retrieve risk value from session storage
-  // useEffect(() => {
-  //   const riskValue = sessionStorage.getItem("riskValue");
-  //   if (riskValue) {
-  //     setSliderValue(parseInt(riskValue, 10));
-  //     sessionStorage.removeItem("riskValue");
-  //   }
-  // }, []);
-
-  // Effect hook to render chart using Chart.js
-  // useEffect(() => {
-  //   if (data) {
-  //     if (chartRef.current) {
-  //       const ctx = chartRef.current.getContext("2d");
-  //       const newChartInstance = new Chart(ctx, {
-  //         type: "line",
-  //         data: {
-  //           labels: data.map((item) =>
-  //             new Date(item.date).toLocaleDateString()
-  //           ),
-  //           datasets: [
-  //             {
-  //               label: "Close Value",
-  //               data: data.map((item) => item.close),
-  //               borderColor: "rgba(255, 99, 132, 1)",
-  //               borderWidth: 1,
-  //             },
-  //           ],
-  //         },
-  //         options: {
-  //           scales: {
-  //             y: {
-  //               beginAtZero: false,
-  //               ticks: {
-  //                 font: {
-  //                   size: 12,
-  //                 },
-  //               },
-  //             },
-  //             x: {
-  //               display: true,
-  //               ticks: {
-  //                 font: {
-  //                   size: 12,
-  //                 },
-  //               },
-  //               grid: {
-  //                 display: false,
-  //               },
-  //             },
-  //           },
-  //         },
-  //       });
-  //       chartRef.current = newChartInstance;
-  //     }
-  //   }
-  // }, [data]);
-
-  // // Effect hook to fetch chart data from API
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const apiUrl = `https://financialmodelingprep.com/api/v3/historical-chart/4hour/AA?from=2023-03-23&to=2024-03-23&apikey=SbUhzMlpiU94dp9UtJGKlPs59R6DBpGi`;
-  //       const response = await fetch(apiUrl);
-  //       if (!response.ok) {
-  //         throw new Error(`HTTP error! status: ${response.status}`);
-  //       }
-  //       const data = await response.json();
-  //       const filteredData = data.filter((item) => {
-  //         const date = new Date(item.date);
-  //         return date;
-  //       });
-  //       setData(filteredData);
-  //     } catch (error) {
-  //       console.error("Error fetching or processing data:", error);
-  //       setData([]);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, []);
 
   return (
     <div className={isLoggedIn ? "home-page-logged" : "home-page"}>
@@ -214,7 +76,7 @@ export default function Homepage() {
                 setOpen(!open);
               }}
             >
-              <img src={portrait} alt=""></img>
+              <img src={portrait} alt="User" />
             </div>
             <div className={`dropdown-menu ${open ? "active" : "inactive"}`}>
               <div className="username">{username}</div>
@@ -236,7 +98,7 @@ export default function Homepage() {
                 </ul>
                 <ul>
                   <Link to="/dashboard/portfolios" className="dropdown-links">
-                    Porfolios <br />
+                    Portfolios <br />
                   </Link>
                 </ul>
                 <ul className="second-container">
@@ -272,61 +134,6 @@ export default function Homepage() {
           </div>
         )}
       </div>
-      {/* Common Slider Container */}
-      {/*<div className="slider-container">
-        <p className="slider-text" style={pStyles}>
-          Select one of the options for the risk input
-        </p>
-        <input
-          type="range"
-          className="slider"
-          id="mySlider"
-          value={sliderValue}
-          max={10}
-          onChange={handleSliderInput}
-          onMouseDown={handleSliderMouseDown}
-          onMouseUp={handleSliderMouseUp}
-          onMouseOut={handleSliderMouseOut}
-        />
-        <div id="slider-value" style={sliderStyles}>
-          {sliderValue}
-        </div>
-        <p className="risk-output">
-          {isSliderInteracted
-            ? sliderValue === 0
-              ? "Please insert a valid risk value"
-              : `The risk selected is: ${sliderValue}`
-            : ""}
-        </p>
-      </div>*/}
     </div>
   );
 }
-// Function to handle continue button click
-
-// const handleContinue = async (e) => {
-//   e.preventDefault();
-//   console.log("Called");
-
-//   console.log("Saving risk value for user:", username);
-//   console.log("Risk value:", sliderValue);
-
-//   if (!isLoggedIn) {
-//     sessionStorage.setItem("riskValue", sliderValue);
-//     navigate("/login");
-//   } else {
-//     try {
-//       const response = await axios.post("http://localhost:3002/save-risk", {
-//         username: username,
-//         riskValue: sliderValue,
-//       });
-
-//       if (response.status === 200) {
-//         console.log("Risk value saved successfully");
-//         navigate("/dashboard/invest");
-//       }
-//     } catch (error) {
-//       console.error("Error saving risk value:", error.message);
-//     }
-//   }
-// };

@@ -1,85 +1,98 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "../Login.css";
 
 export default function Login() {
-  // State variables to store the username, password, and login status
   const [loginUserName, setLoginUserName] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginStatus, setLoginStatus] = useState("");
-  const [statusHolder, setstatusHolder] = useState("message");
+  const [statusHolder, setStatusHolder] = useState("message");
 
-  // State variable to track if the user is logged in
   const [isLoggedIn, setIsLoggedIn] = useState();
 
-  // Function to navigate between pages
   const navigate = useNavigate();
 
-  // Effect to check the login status when the component mounts
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        // Send a request to the server to check login status
         const response = await fetch("http://localhost:3002/", {
           method: "GET",
           credentials: "include",
         });
-        // Parse the response
         const data = await response.json();
-        // Update isLoggedIn state based on response
-        setIsLoggedIn(data.valid && data.isVerified);
+        setIsLoggedIn(data.valid);
       } catch (error) {
         console.error("Error checking login status:", error);
       }
     };
     checkLoginStatus();
-  }, []); // Empty dependency array means this effect runs only once when component mounts
+  }, []);
 
-  // Effect to navigate to home page when isLoggedIn changes
   useEffect(() => {
     if (isLoggedIn === true) {
       navigate("/");
     }
-  }, [isLoggedIn, navigate]); // Re-run effect when isLoggedIn or navigate changes
+  }, [isLoggedIn, navigate]);
 
-  // Function to handle user login
   const loginUser = (event) => {
     event.preventDefault();
-    // Send login request to server
     axios
       .post("http://localhost:3002/login", {
         LoginUserName: loginUserName,
         LoginPassword: loginPassword,
       })
       .then((response) => {
-        // Handle response from server
         if (response.data.message) {
           setLoginStatus(response.data.message);
-        } else if (!response.data.isVerified) {
-          setLoginStatus("User not verified");
         } else {
-          // Set isLoggedIn in local storage and navigate to home page
           localStorage.setItem("isLoggedIn", "true");
           navigate("/");
         }
       });
   };
 
-  // Effect to display login status message
+  const renderStatusMessage = () => {
+    switch (loginStatus) {
+      case "Email not verified":
+        return (
+          <>
+            Your email is not verified. Please check your inbox for a
+            verification link.
+          </>
+        );
+      case "Admin approval rejected":
+        return (
+          <>
+            Admin approval rejected. Try again <Link to="/rejection">here</Link>
+            .
+          </>
+        );
+      case "Admin approval pending":
+        return (
+          <>
+            Your account is pending admin approval. Please wait for
+            confirmation.
+          </>
+        );
+      case "Credentials error":
+        return <>Incorrect username or password.</>;
+      default:
+        return null;
+    }
+  };
+
   useEffect(() => {
     if (loginStatus !== "") {
-      setstatusHolder("showMessage");
+      setStatusHolder("showMessage");
       setTimeout(() => {
-        setstatusHolder("message");
+        setStatusHolder("message");
       }, 4000);
     }
-  }, [loginStatus]); // Re-run effect when loginStatus changes
+  }, [loginStatus]);
 
-  // Set axios to use credentials
   axios.defaults.withCredentials = true;
 
-  // Render the login form
   return (
     <div className="login-page">
       <div className="login">
@@ -130,7 +143,7 @@ export default function Login() {
                   Sign-up
                 </a>
               </p>
-              <span className={statusHolder}>{loginStatus}</span>
+              <span className={statusHolder}>{renderStatusMessage()}</span>
             </div>
           </form>
         </div>
