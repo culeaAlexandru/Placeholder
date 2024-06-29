@@ -100,7 +100,7 @@ export default function DashboardWatchlist() {
 
   const updateChartData = useCallback(
     (symbol) => {
-      if (!symbol || !startDate || !endDate || !interval) {
+      if (!symbol || !startDate || !endDate || interval === "Interval") {
         return;
       }
 
@@ -123,10 +123,12 @@ export default function DashboardWatchlist() {
         })
         .catch((error) => {
           console.error("Error:", error);
+          setWarning("An error occurred while fetching data.");
         });
     },
     [interval, startDate, endDate, apiKey]
   );
+
   useEffect(() => {
     if (searchState.hasSearched && searchState.companyName) {
       fetch(searchApiUrl)
@@ -286,6 +288,7 @@ export default function DashboardWatchlist() {
 
   const handleSaveAsset = () => {
     if (
+      interval === "Interval" ||
       !data ||
       data.length === 0 ||
       data[data.length - 1]?.close === undefined

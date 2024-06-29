@@ -672,21 +672,21 @@ export default function DashboardPortfolios() {
       "Portfolio Data",
       [
         ["Asset 1 Name", portfolio.asset1Name],
-        ["Asset 1 %", `${portfolio.asset1Percent}%`],
+        ["Asset 1 %", `${portfolio.asset1Percent}`],
         ["Asset 2 Name", portfolio.asset2Name || "-"],
         [
           "Asset 2 %",
-          portfolio.asset2Percent ? `${portfolio.asset2Percent}%` : "-",
+          portfolio.asset2Percent ? `${portfolio.asset2Percent}` : "-",
         ],
         ["Asset 3 Name", portfolio.asset3Name || "-"],
         [
           "Asset 3 %",
-          portfolio.asset3Percent ? `${portfolio.asset3Percent}%` : "-",
+          portfolio.asset3Percent ? `${portfolio.asset3Percent}` : "-",
         ],
         ["Asset 4 Name", portfolio.asset4Name || "-"],
         [
           "Asset 4 %",
-          portfolio.asset4Percent ? `${portfolio.asset4Percent}%` : "-",
+          portfolio.asset4Percent ? `${portfolio.asset4Percent}` : "-",
         ],
         ["Expected Return", portfolio.expectedReturn],
         ["Risk", portfolio.risk],

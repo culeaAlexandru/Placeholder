@@ -1819,7 +1819,7 @@ export default function DashboardInvest() {
               <div className="button-container">
                 <div>
                   <button onClick={handlePreviousStep} className="btn back-btn">
-                    Back{" "}
+                    Back
                   </button>
                   {(!assetDataAvailability.A ||
                     !assetDataAvailability.B ||
@@ -1829,7 +1829,6 @@ export default function DashboardInvest() {
                       icon={faExclamationTriangle}
                       style={{
                         color: "red",
-                        marginLeft: "2px",
                       }}
                       title="One of the assets has no data"
                     />
@@ -1876,23 +1875,22 @@ export default function DashboardInvest() {
                   <button onClick={handlePreviousStep} className="btn back-btn">
                     Back
                   </button>
-                  <button
-                    onClick={handleClearButtonClick}
-                    className="btn reset-btn"
-                  >
-                    Reset
-                  </button>
-
                   {(!assetDataAvailability.A ||
                     !assetDataAvailability.B ||
                     !assetDataAvailability.C ||
                     !assetDataAvailability.D) && (
                     <FontAwesomeIcon
                       icon={faExclamationTriangle}
-                      style={{ color: "red", marginLeft: "2px" }}
+                      style={{ color: "red" }}
                       title="One of the assets has no data"
                     />
                   )}
+                  <button
+                    onClick={handleClearButtonClick}
+                    className="btn reset-btn"
+                  >
+                    Reset
+                  </button>
                 </div>
                 {endDate && (
                   <button onClick={handleNextStep} className="btn next-btn">
@@ -1931,36 +1929,37 @@ export default function DashboardInvest() {
                   <button onClick={handlePreviousStep} className="btn back-btn">
                     Back
                   </button>
-                  <button
-                    onClick={handleClearButtonClick}
-                    className="btn reset-btn"
-                  >
-                    Reset
-                  </button>
-
                   {(!assetDataAvailability.A ||
                     !assetDataAvailability.B ||
                     !assetDataAvailability.C ||
                     !assetDataAvailability.D) && (
                     <FontAwesomeIcon
                       icon={faExclamationTriangle}
-                      style={{ color: "red", marginLeft: "2px" }}
+                      style={{ color: "red" }}
                       title="One of the assets has no data"
                     />
                   )}
+                  <button
+                    onClick={handleClearButtonClick}
+                    className="btn reset-btn"
+                  >
+                    Reset
+                  </button>
                 </div>
-                <button
-                  onClick={handleNextStep}
-                  className="btn next-btn"
-                  disabled={
-                    !assetDataAvailability.A ||
-                    !assetDataAvailability.B ||
-                    !assetDataAvailability.C ||
-                    !assetDataAvailability.D
-                  }
-                >
-                  Next
-                </button>
+                {interval !== "Interval" && (
+                  <button
+                    onClick={handleNextStep}
+                    className="btn next-btn"
+                    disabled={
+                      !assetDataAvailability.A ||
+                      !assetDataAvailability.B ||
+                      !assetDataAvailability.C ||
+                      !assetDataAvailability.D
+                    }
+                  >
+                    Next
+                  </button>
+                )}
               </div>
             </div>
           </div>

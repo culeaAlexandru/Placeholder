@@ -102,6 +102,11 @@ export default function Register() {
       return;
     }
 
+    if (pronoun.trim() === "") {
+      setErrorMessage("Please select a pronoun");
+      return;
+    }
+
     if (country.trim() === "") {
       setErrorMessage("Please enter a country");
       return;
@@ -136,13 +141,18 @@ export default function Register() {
       return;
     }
 
+    if (!CIPhoto) {
+      setErrorMessage("Please upload a CI photo");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("Email", email);
     formData.append("UserName", userName);
     formData.append("Password", password);
     formData.append("FirstName", firstName);
     formData.append("LastName", lastName);
-    formData.append("Pornun", pronoun);
+    formData.append("Pronoun", pronoun);
     formData.append("Country", country);
     formData.append("Adress", adress);
     formData.append("PhoneNumber", phoneNumber);

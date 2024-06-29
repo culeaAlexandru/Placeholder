@@ -194,7 +194,7 @@ app.get("/verify/:token", (req, res) => {
     client
       .db("portfolio_login_db")
       .collection("users")
-      .updateOne({ email: email }, { $set: { verified: true } }, (err) => {
+      .updateOne({ email: email }, { $set: { emailVerified: true } }, (err) => {
         if (err) {
           res.status(500).json({ message: "Error verifying email" });
         } else {
