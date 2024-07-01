@@ -332,9 +332,21 @@ export default function Register() {
                 id="CIPhoto"
                 name="CIPhoto"
                 onChange={(event) => {
-                  setCIPhoto(event.target.files[0]);
-                  setFileName(event.target.files[0].name); // Update file name state
-                  setErrorMessage("");
+                  if (event.target.files && event.target.files[0]) {
+                    const file = event.target.files[0];
+                    if (!file.type.startsWith("image/")) {
+                      setErrorMessage("Please upload a valid image file.");
+                      setCIPhoto(null);
+                      setFileName("No file chosen");
+                    } else {
+                      setCIPhoto(file);
+                      setFileName(file.name); // Update file name state
+                      setErrorMessage("");
+                    }
+                  } else {
+                    setCIPhoto(null);
+                    setFileName("No file chosen"); // Reset file name state
+                  }
                 }}
               />
               <span className="file-chosen">{fileName}</span>

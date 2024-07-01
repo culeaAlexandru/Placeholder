@@ -127,11 +127,6 @@ export default function Login() {
               />
             </div>
             <div className="mb-3">
-              <div className="forgot">
-                <a href="*">Forgot password?</a>
-              </div>
-            </div>
-            <div className="mb-3">
               <button type="submit" className="btn-login" onClick={loginUser}>
                 Login
               </button>

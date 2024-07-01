@@ -77,7 +77,7 @@ export default function DashboardInvest() {
   const [historicalDates, setHistoricalDates] = useState([]);
   const chartContainerRef = useRef(null);
   const chartInstanceRef = useRef(null);
-
+  const [isLoading, setIsLoading] = useState(false);
   const [assetsReturn, setAssetsReturn] = useState([]);
   const [assetsVol, setAssetsVol] = useState([]);
   const [assetsCorrelationMatrix, setAssetsCorrelationMatrix] = useState([]);
@@ -93,10 +93,10 @@ export default function DashboardInvest() {
     C: true,
     D: true,
   });
-
   const [shouldRecalculate, setShouldRecalculate] = useState(false);
+  const [suggestionCache, setSuggestionCache] = useState({});
 
-  const apiKey = "SbUhzMlpiU94dp9UtJGKlPs59R6DBpGi ";
+  const apiKey = "N3JAUKTbfxv2bro3C9VzFQARVY7n2Vn5";
 
   // Check user's login status
   useEffect(() => {
@@ -194,6 +194,14 @@ export default function DashboardInvest() {
   };
 
   const fetchSuggestions = (input, setSearchState) => {
+    if (suggestionCache[input]) {
+      setSearchState((prevState) => ({
+        ...prevState,
+        suggestions: suggestionCache[input],
+      }));
+      return;
+    }
+
     fetch(
       `https://financialmodelingprep.com/api/v3/search?query=${input}&limit=5&apikey=${apiKey}`
     )
@@ -235,6 +243,11 @@ export default function DashboardInvest() {
                 name: profile.name,
                 symbol: profile.symbol,
               }));
+
+            setSuggestionCache((prevCache) => ({
+              ...prevCache,
+              [input]: filteredSuggestions,
+            }));
 
             setSearchState((prevState) => ({
               ...prevState,
@@ -383,25 +396,53 @@ export default function DashboardInvest() {
 
   const handleInputFocusA = () => {
     if (searchStateA.companyName.trim() !== "") {
-      fetchSuggestions(searchStateA.companyName, setSearchStateA);
+      if (suggestionCache[searchStateA.companyName.trim()]) {
+        setSearchStateA((prevState) => ({
+          ...prevState,
+          suggestions: suggestionCache[searchStateA.companyName.trim()],
+        }));
+      } else {
+        fetchSuggestions(searchStateA.companyName, setSearchStateA);
+      }
     }
   };
 
   const handleInputFocusB = () => {
     if (searchStateB.companyName.trim() !== "") {
-      fetchSuggestions(searchStateB.companyName, setSearchStateB);
+      if (suggestionCache[searchStateB.companyName.trim()]) {
+        setSearchStateB((prevState) => ({
+          ...prevState,
+          suggestions: suggestionCache[searchStateB.companyName.trim()],
+        }));
+      } else {
+        fetchSuggestions(searchStateB.companyName, setSearchStateB);
+      }
     }
   };
 
   const handleInputFocusC = () => {
     if (searchStateC.companyName.trim() !== "") {
-      fetchSuggestions(searchStateC.companyName, setSearchStateC);
+      if (suggestionCache[searchStateC.companyName.trim()]) {
+        setSearchStateC((prevState) => ({
+          ...prevState,
+          suggestions: suggestionCache[searchStateC.companyName.trim()],
+        }));
+      } else {
+        fetchSuggestions(searchStateC.companyName, setSearchStateC);
+      }
     }
   };
 
   const handleInputFocusD = () => {
     if (searchStateD.companyName.trim() !== "") {
-      fetchSuggestions(searchStateD.companyName, setSearchStateD);
+      if (suggestionCache[searchStateD.companyName.trim()]) {
+        setSearchStateD((prevState) => ({
+          ...prevState,
+          suggestions: suggestionCache[searchStateD.companyName.trim()],
+        }));
+      } else {
+        fetchSuggestions(searchStateD.companyName, setSearchStateD);
+      }
     }
   };
 
@@ -492,6 +533,8 @@ export default function DashboardInvest() {
     const fetchAndProcessData = async () => {
       if (!shouldRecalculate) return;
 
+      setIsLoading(true); // Start loading
+
       const symbols = [
         assetSymbolA,
         assetSymbolB,
@@ -505,7 +548,10 @@ export default function DashboardInvest() {
         setFilteredDataD,
       ];
 
-      if (symbols.length < 2) return;
+      if (symbols.length < 2) {
+        setIsLoading(false); // Stop loading if not enough symbols
+        return;
+      }
 
       const fetchInterval = interval === "Daily" ? "4hour" : interval;
 
@@ -597,6 +643,7 @@ export default function DashboardInvest() {
       sessionStorage.setItem("meanReturns", JSON.stringify(meanReturns));
 
       setShouldRecalculate(false);
+      setIsLoading(false); // Stop loading after data is fetched and processed
     };
 
     if (startDate && endDate && interval !== "Interval") {
@@ -867,18 +914,10 @@ export default function DashboardInvest() {
 
   const calculatePortfolioMetrics = useCallback(
     (weights) => {
-      console.log("Weights:", weights);
-      console.log("Assets Return:", assetsReturn);
-      console.log("Assets Volatility:", assetsVol);
-      console.log("Assets Correlation Matrix:", assetsCorrelationMatrix);
-      console.log("Risk-Free Rate:", riskFreeRate);
-
       const portfolioReturn = weights.reduce(
         (acc, weight, index) => acc + weight * assetsReturn[index],
         0
       );
-
-      console.log("Calculated Portfolio Return:", portfolioReturn);
 
       let portfolioVolatility = 0;
       for (let i = 0; i < weights.length; i++) {
@@ -893,12 +932,8 @@ export default function DashboardInvest() {
       }
       portfolioVolatility = Math.sqrt(portfolioVolatility);
 
-      console.log("Calculated Portfolio Volatility:", portfolioVolatility);
-
       const sharpeRatio =
         (portfolioReturn - riskFreeRate) / portfolioVolatility;
-
-      console.log("Calculated Sharpe Ratio:", sharpeRatio);
 
       return {
         return: portfolioReturn,
@@ -984,14 +1019,6 @@ export default function DashboardInvest() {
           break;
         }
 
-        if (iteration % 100 === 0) {
-          const portReturn = calculateReturn(currentWeights);
-          const portVariance = calculateVariance(currentWeights);
-          console.log(
-            `Iteration ${iteration}: Return=${portReturn}, Variance=${portVariance}, Weights=${currentWeights}`
-          );
-        }
-
         iteration++;
         // Decay learning rate
         learningRate *= 0.99;
@@ -999,12 +1026,10 @@ export default function DashboardInvest() {
 
       const optimizedMetrics = calculatePortfolioMetrics(currentWeights);
 
-      console.log(`Optimized Portfolio for Target Return ${targetReturn}:`, {
+      return {
         weights: currentWeights,
         ...optimizedMetrics,
-      });
-
-      return currentWeights;
+      };
     },
     [
       assetsReturn,
@@ -1036,13 +1061,16 @@ export default function DashboardInvest() {
         { length: validAssetsReturn.length },
         () => 1 / validAssetsReturn.length
       );
-      const optimizedWeights = optimizePortfolio(initialWeights, targetReturn);
-      return calculatePortfolioMetrics(optimizedWeights);
+      const optimizedPortfolio = optimizePortfolio(
+        initialWeights,
+        targetReturn
+      );
+      return optimizedPortfolio;
     });
 
     const volatilities = portfolios.map((portfolio) => portfolio.volatility);
     return { portfolios, volatilities };
-  }, [assetsReturn, optimizePortfolio, calculatePortfolioMetrics]);
+  }, [assetsReturn, optimizePortfolio]);
 
   const generateRandomPortfolios = useCallback(() => {
     const numPortfolios = 500;
@@ -1061,11 +1089,6 @@ export default function DashboardInvest() {
       weights = weights.map((weight) => weight / normalizedWeightSum);
 
       const portfolioMetrics = calculatePortfolioMetrics(weights);
-
-      console.log(`Generated Portfolio ${i + 1}:`, {
-        weights,
-        ...portfolioMetrics,
-      });
 
       portfolios.push({ ...portfolioMetrics, weights });
     }
@@ -1178,6 +1201,7 @@ export default function DashboardInvest() {
               beginAtZero: false,
             },
           },
+          // Add this part inside your Chart configuration, where onClick is defined.
           onClick: async (event, elements) => {
             if (elements.length > 0) {
               const element = elements[0];
@@ -1188,9 +1212,9 @@ export default function DashboardInvest() {
                   dataIndex
                 ];
 
-              const clickedPortfolio = clickedData.metrics;
+              if (clickedData && clickedData.metrics) {
+                const clickedPortfolio = clickedData.metrics;
 
-              if (clickedPortfolio) {
                 const meanReturns =
                   JSON.parse(sessionStorage.getItem("meanReturns")) || [];
                 const bestOutcomeReturn = calculateBestOutcome(
@@ -1198,21 +1222,28 @@ export default function DashboardInvest() {
                   meanReturns
                 );
 
-                const cardInfo = {
-                  return: clickedPortfolio.return.toFixed(2),
-                  volatility: clickedPortfolio.volatility.toFixed(2),
-                  bestOutcomeReturn: bestOutcomeReturn.toFixed(2),
-                  portfolioComponents: clickedPortfolio.weights.map(
-                    (weight, index) =>
-                      `Asset ${
-                        [
+                // Ensure that weights are defined and process them
+                const portfolioComponents = clickedPortfolio.weights
+                  ? clickedPortfolio.weights
+                      .map((weight, index) => {
+                        const symbol = [
                           assetSymbolA,
                           assetSymbolB,
                           assetSymbolC,
                           assetSymbolD,
-                        ][index]
-                      }: ${(weight * 100).toFixed(2)}%`
-                  ),
+                        ][index];
+                        return symbol
+                          ? `Asset ${symbol}: ${(weight * 100).toFixed(2)}%`
+                          : null;
+                      })
+                      .filter(Boolean)
+                  : [];
+
+                const cardInfo = {
+                  return: clickedPortfolio.return.toFixed(2),
+                  volatility: clickedPortfolio.volatility.toFixed(2),
+                  bestOutcomeReturn: bestOutcomeReturn.toFixed(2),
+                  portfolioComponents,
                 };
 
                 console.log("Clicked Portfolio Data:", cardInfo);
@@ -1808,7 +1839,7 @@ export default function DashboardInvest() {
                   selected={startDate}
                   onChange={handleStartDateChange} // Updated
                   placeholderText="Select start date"
-                  maxDate={new Date()}
+                  maxDate={yesterday}
                   className="date-picker-input"
                 />
                 <FontAwesomeIcon
@@ -1946,7 +1977,7 @@ export default function DashboardInvest() {
                     Reset
                   </button>
                 </div>
-                {interval !== "Interval" && (
+                {interval !== "Interval" && !isLoading && (
                   <button
                     onClick={handleNextStep}
                     className="btn next-btn"

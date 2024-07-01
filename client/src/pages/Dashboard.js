@@ -173,7 +173,8 @@ export default function Dashboard() {
           </li>
           <li>
             <strong>View Saved Assets:</strong> View and manage assets you've
-            saved to your watchlist.
+            saved to your watchlist after inputing the start date, end date and
+            the interval.
           </li>
           <li>
             <strong>Toggle Data View:</strong> Switch between historical data

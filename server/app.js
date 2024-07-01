@@ -580,7 +580,7 @@ app.post("/delete-saved-asset", async (req, res) => {
 app.post("/save-data-profile", async (req, res) => {
   const {
     username,
-    userData: { firstName, lastName, country, currency, pronoun },
+    userData: { firstName, lastName, country, pronoun },
   } = req.body;
 
   try {
@@ -598,7 +598,6 @@ app.post("/save-data-profile", async (req, res) => {
             firstName: firstName,
             lastName: lastName,
             country: country,
-            currency: currency,
             pronoun: pronoun,
           },
         },

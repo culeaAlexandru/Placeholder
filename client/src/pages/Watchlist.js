@@ -321,7 +321,18 @@ export default function DashboardWatchlist() {
   };
 
   useEffect(() => {
-    if (username.length > 0) {
+    if (
+      username.length > 0 &&
+      startDate &&
+      endDate &&
+      interval &&
+      interval !== "Interval"
+    ) {
+      console.log("Fetching saved assets for:", username); // Debug log
+      console.log("Start Date:", startDate); // Debug log
+      console.log("End Date:", endDate); // Debug log
+      console.log("Interval:", interval); // Debug log
+
       axios
         .get(`http://localhost:3002/saved-assets/${username}`)
         .then((response) => {
@@ -337,7 +348,7 @@ export default function DashboardWatchlist() {
           console.error("Error fetching saved assets:", error);
         });
     }
-  }, [username]);
+  }, [username, startDate, endDate, interval]);
 
   const handleInputChange = (e) => {
     const input = e.target.value;
@@ -650,30 +661,32 @@ export default function DashboardWatchlist() {
                 Save Asset
               </button>
             </div>
-            <div className="saved-assets">
-              <h2>Saved Assets:</h2>
-              {savedAssets.length > 0 && (
-                <ul>
-                  {savedAssets.map((assetSymbol) => (
-                    <li key={assetSymbol}>
-                      <button
-                        className="btn view-asset"
-                        onClick={() => handleAssetButtonClick(assetSymbol)}
-                      >
-                        {assetSymbol}
-                      </button>
-                      <button
-                        className="delete-asset"
-                        onClick={() => handleDeleteAsset(assetSymbol)}
-                        title="Delete asset"
-                      >
-                        &times;
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            {startDate && endDate && interval && interval !== "Interval" && (
+              <div className="saved-assets">
+                <h2>Saved Assets:</h2>
+                {savedAssets.length > 0 && (
+                  <ul>
+                    {savedAssets.map((assetSymbol) => (
+                      <li key={assetSymbol}>
+                        <button
+                          className="btn view-asset"
+                          onClick={() => handleAssetButtonClick(assetSymbol)}
+                        >
+                          {assetSymbol}
+                        </button>
+                        <button
+                          className="delete-asset"
+                          onClick={() => handleDeleteAsset(assetSymbol)}
+                          title="Delete asset"
+                        >
+                          &times;
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
           <div className="chart-container">
             <div className="toggle-section">
