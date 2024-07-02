@@ -22,6 +22,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DashboardWatchlist() {
+  // State variables
   const [isLoggedIn, setIsLoggedIn] = useState();
   const [modal, setModal] = useState(false);
   const [username, setUsername] = useState("");
@@ -41,6 +42,9 @@ export default function DashboardWatchlist() {
   const [displayType, setDisplayType] = useState(
     localStorage.getItem("displayType") || "returns"
   );
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [interval, setInterval] = useState("Interval");
@@ -50,6 +54,7 @@ export default function DashboardWatchlist() {
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
 
+  // Effect to check login status when component mounts
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -67,16 +72,19 @@ export default function DashboardWatchlist() {
     checkLoginStatus();
   }, []);
 
+  // Effect to navigate to login page if user is not logged in
   useEffect(() => {
     if (isLoggedIn === false) {
       navigate("/login");
     }
   }, [isLoggedIn, navigate]);
 
+  // Function to toggle the modal visibility
   const toggleModal = () => {
     setModal(!modal);
   };
 
+  // Effect to add or remove active-modal class to body based on modal states
   useEffect(() => {
     if (modal) {
       document.body.classList.add("active-modal");
@@ -85,6 +93,7 @@ export default function DashboardWatchlist() {
     }
   }, [modal]);
 
+  // Function to handle user logout
   const handleLogout = async () => {
     try {
       await axios.get("http://localhost:3002/logout", {
@@ -92,12 +101,12 @@ export default function DashboardWatchlist() {
       });
       localStorage.removeItem("isLoggedIn");
       setIsLoggedIn(false);
-      console.log("User logged out successfully");
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
 
+  // Function to fetch and update chart data based on selected asset and date range
   const updateChartData = useCallback(
     (symbol) => {
       if (!symbol || !startDate || !endDate || interval === "Interval") {
@@ -129,6 +138,7 @@ export default function DashboardWatchlist() {
     [interval, startDate, endDate, apiKey]
   );
 
+  // Effect to search for the company and get asset symbol
   useEffect(() => {
     if (searchState.hasSearched && searchState.companyName) {
       fetch(searchApiUrl)
@@ -163,12 +173,14 @@ export default function DashboardWatchlist() {
     }
   }, [searchApiUrl, searchState]);
 
+  // Effect to update chart data when asset symbol, dates or interval changes
   useEffect(() => {
     if (assetSymbol && startDate && endDate && interval) {
       updateChartData(assetSymbol);
     }
   }, [assetSymbol, startDate, endDate, interval, updateChartData]);
 
+  // Function to draw the chart
   const drawChart = useCallback(() => {
     const ctx = chartRef.current.getContext("2d");
     if (chartInstanceRef.current) {
@@ -180,7 +192,7 @@ export default function DashboardWatchlist() {
         labels: data
           ? data
               .map((item) => new Date(item.date).toLocaleDateString())
-              .reverse() // Reverse the date labels
+              .reverse()
           : [],
         datasets: [
           {
@@ -222,8 +234,8 @@ export default function DashboardWatchlist() {
     chartInstanceRef.current = newChartInstance;
   }, [data, displayType]);
 
+  // Effect to initialize the chart with empty data on component mount
   useEffect(() => {
-    // Initialize the chart with empty data
     const ctx = chartRef.current.getContext("2d");
     const initialChartInstance = new Chart(ctx, {
       type: "line",
@@ -271,12 +283,14 @@ export default function DashboardWatchlist() {
     };
   }, []);
 
+  // Effect to redraw the chart when data or display type changes
   useEffect(() => {
     if (data) {
       drawChart();
     }
   }, [data, displayType, drawChart]);
 
+  // Function to calculate returns for the asset
   const calculateReturns = (data) => {
     if (data.length < 2) return [];
     const returns = data.slice(1).map((currentClose, index) => {
@@ -286,6 +300,7 @@ export default function DashboardWatchlist() {
     return returns;
   };
 
+  // Function to save the asset to the user's watchlist
   const handleSaveAsset = () => {
     if (
       interval === "Interval" ||
@@ -320,6 +335,7 @@ export default function DashboardWatchlist() {
       });
   };
 
+  // Effect to fetch saved assets for the user
   useEffect(() => {
     if (
       username.length > 0 &&
@@ -328,11 +344,6 @@ export default function DashboardWatchlist() {
       interval &&
       interval !== "Interval"
     ) {
-      console.log("Fetching saved assets for:", username); // Debug log
-      console.log("Start Date:", startDate); // Debug log
-      console.log("End Date:", endDate); // Debug log
-      console.log("Interval:", interval); // Debug log
-
       axios
         .get(`http://localhost:3002/saved-assets/${username}`)
         .then((response) => {
@@ -350,6 +361,7 @@ export default function DashboardWatchlist() {
     }
   }, [username, startDate, endDate, interval]);
 
+  // Function to handle input change for asset search
   const handleInputChange = (e) => {
     const input = e.target.value;
     setSearchState((prevState) => ({
@@ -368,6 +380,7 @@ export default function DashboardWatchlist() {
     fetchSuggestions(input);
   };
 
+  // Function to fetch asset suggestions based on user input
   const fetchSuggestions = (input) => {
     fetch(
       `https://financialmodelingprep.com/api/v3/search?query=${input}&limit=5&apikey=${apiKey}`
@@ -433,16 +446,19 @@ export default function DashboardWatchlist() {
       });
   };
 
+  // Function to handle input focus for asset search
   const handleInputFocus = () => {
     if (searchState.companyName.trim() !== "") {
       fetchSuggestions(searchState.companyName);
     }
   };
 
+  // Function to handle asset button click to update chart
   const handleAssetButtonClick = (assetSymbol) => {
     setAssetSymbol(assetSymbol);
   };
 
+  // Function to handle suggestion click from dropdown
   const handleSuggestionClick = (name, symbol) => {
     setSearchResult([{ name, symbol }]);
     setSearchState({
@@ -454,6 +470,7 @@ export default function DashboardWatchlist() {
     setAssetSymbol(symbol);
   };
 
+  // Function to toggle display type between historical and returns
   const handleToggleChange = () => {
     const newDisplayType =
       displayType === "historical" ? "returns" : "historical";
@@ -461,6 +478,7 @@ export default function DashboardWatchlist() {
     localStorage.setItem("displayType", newDisplayType);
   };
 
+  // Function to handle click outside of search bar to close suggestions
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -480,6 +498,7 @@ export default function DashboardWatchlist() {
     };
   }, [searchBarRef]);
 
+  // Function to delete saved asset from watchlist
   const handleDeleteAsset = (assetSymbol) => {
     axios
       .post("http://localhost:3002/delete-saved-asset", {
@@ -617,7 +636,7 @@ export default function DashboardWatchlist() {
                   selected={startDate}
                   onChange={(date) => setStartDate(date)}
                   placeholderText="Select start date"
-                  maxDate={new Date()}
+                  maxDate={yesterday}
                 />
                 <FontAwesomeIcon
                   icon={faCalendarAlt}

@@ -1,4 +1,1 @@
 1. The rezolution of the pages is not flexible(eg. The elements in the Home-page are visible only on 1920x1080)
-2. Multiple console.logs are present in the front-end (Dashboard, Home, Invest, Portfolios, Profile, Register, Watchlist) and back-end (app.listen, connectToMonge, register, login, save-risk, get-risk, save-asset, save-data-portfolio x3, save-data-profile x2, get-profile-data x2)
-3. Terminal pause after refreshing multiple pages.
-4. Some of the expected return on Portfolios changes even if the portfolio was saved in the same day.

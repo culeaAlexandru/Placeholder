@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import "../Register.css";
 
 export default function Register() {
+  // State variables
   const [email, setEmail] = useState("");
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
@@ -20,9 +21,11 @@ export default function Register() {
 
   const navigateTo = useNavigate();
 
+  // Function to handle user registration
   const creatUser = (event) => {
     event.preventDefault();
 
+    // Form validation
     if (email.trim() === "") {
       setErrorMessage("Please enter an email");
       return;
@@ -146,6 +149,7 @@ export default function Register() {
       return;
     }
 
+    // Create form data for submission
     const formData = new FormData();
     formData.append("Email", email);
     formData.append("UserName", userName);
@@ -158,6 +162,7 @@ export default function Register() {
     formData.append("PhoneNumber", phoneNumber);
     formData.append("CIPhoto", CIPhoto);
 
+    // Submit form data to the server
     axios
       .post("http://localhost:3002/register", formData, {
         headers: {
@@ -183,7 +188,6 @@ export default function Register() {
         }
       })
       .catch((error) => {
-        console.log("Error during registration: ", error);
         setErrorMessage("Error during registration. Please try again.");
       });
   };
@@ -340,12 +344,12 @@ export default function Register() {
                       setFileName("No file chosen");
                     } else {
                       setCIPhoto(file);
-                      setFileName(file.name); // Update file name state
+                      setFileName(file.name);
                       setErrorMessage("");
                     }
                   } else {
                     setCIPhoto(null);
-                    setFileName("No file chosen"); // Reset file name state
+                    setFileName("No file chosen");
                   }
                 }}
               />

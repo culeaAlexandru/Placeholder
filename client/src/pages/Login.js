@@ -4,15 +4,19 @@ import { useNavigate, Link } from "react-router-dom";
 import "../Login.css";
 
 export default function Login() {
+  // State variables for storing username, password, login status, and status holder class
   const [loginUserName, setLoginUserName] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginStatus, setLoginStatus] = useState("");
   const [statusHolder, setStatusHolder] = useState("message");
 
+  // State variable for checking if the user is logged in
   const [isLoggedIn, setIsLoggedIn] = useState();
 
+  // Hook for navigating programmatically
   const navigate = useNavigate();
 
+  // Effect to check login status on component mount
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -29,12 +33,14 @@ export default function Login() {
     checkLoginStatus();
   }, []);
 
+  // Effect to redirect to home page if the user is already logged in
   useEffect(() => {
     if (isLoggedIn === true) {
       navigate("/");
     }
   }, [isLoggedIn, navigate]);
 
+  // Function to handle user login
   const loginUser = (event) => {
     event.preventDefault();
     axios
@@ -52,6 +58,7 @@ export default function Login() {
       });
   };
 
+  // Function to render login status messages
   const renderStatusMessage = () => {
     switch (loginStatus) {
       case "Email not verified":
@@ -82,6 +89,7 @@ export default function Login() {
     }
   };
 
+  // Effect to show and hide status messages
   useEffect(() => {
     if (loginStatus !== "") {
       setStatusHolder("showMessage");
@@ -91,6 +99,7 @@ export default function Login() {
     }
   }, [loginStatus]);
 
+  // Set axios to send credentials with requests
   axios.defaults.withCredentials = true;
 
   return (

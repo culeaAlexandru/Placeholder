@@ -7,14 +7,9 @@ const EmailVerify = () => {
   const navigateTo = useNavigate();
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:3002/verify/${token}`)
-      .then((response) => {
-        console.log(response.data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    axios.get(`http://localhost:3002/verify/${token}`).catch((error) => {
+      console.error(error);
+    });
   }, [token, navigateTo]);
 
   return (

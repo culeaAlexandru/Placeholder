@@ -14,6 +14,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DashboardProfile() {
+  // State variables
   const [isLoggedIn, setIsLoggedIn] = useState();
   const [modal, setModal] = useState(false);
   const [username, setUsername] = useState("");
@@ -38,6 +39,7 @@ export default function DashboardProfile() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  // Check login status on component mount
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -56,16 +58,19 @@ export default function DashboardProfile() {
     checkLoginStatus();
   }, []);
 
+  // Effect to navigate to login page if user is not logged in
   useEffect(() => {
     if (isLoggedIn === false) {
       navigate("/login");
     }
   }, [isLoggedIn, navigate]);
 
+  // Function to toggle the modal visibility
   const toggleModal = () => {
     setModal(!modal);
   };
 
+  // Effect to add or remove active-modal class to body based on modal states
   useEffect(() => {
     if (modal) {
       document.body.classList.add("active-modal");
@@ -74,11 +79,13 @@ export default function DashboardProfile() {
     }
   }, [modal]);
 
+  // Function to handle pronoun selection
   const handlePronounSelect = (pronoun) => {
     setPronoun(pronoun);
     setSelectedPronoun(pronoun);
   };
 
+  // Function to save user profile data
   const handleSaveUser = async () => {
     const userData = {
       firstName: inputValues.firstName || profileData.firstName,
@@ -97,7 +104,6 @@ export default function DashboardProfile() {
       );
 
       if (response.status === 200) {
-        console.log("User data updated/created successfully");
         setProfileData(userData);
         setEditMode(false);
         setPronoun(pronounInput || profileData.pronoun);
@@ -110,6 +116,7 @@ export default function DashboardProfile() {
     }
   };
 
+  // Function to fetch profile data for the given username
   const fetchProfileData = async (username) => {
     try {
       const response = await axios.post(
@@ -130,6 +137,7 @@ export default function DashboardProfile() {
     }
   };
 
+  // Function to handle user logout
   const handleLogout = async () => {
     try {
       await axios.get("http://localhost:3002/logout", {
@@ -137,17 +145,18 @@ export default function DashboardProfile() {
       });
       localStorage.removeItem("isLoggedIn");
       setIsLoggedIn(false);
-      console.log("User logged out successfully");
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
 
+  // Function to cancel editing mode
   const handleCancel = () => {
     setInputValues(profileData);
     setEditMode(false);
   };
 
+  // Function to handle password change
   const handlePasswordChange = async () => {
     if (newPassword.trim() === "") {
       setErrorMessage("Please enter a password");
@@ -174,7 +183,6 @@ export default function DashboardProfile() {
       );
 
       if (response.status === 200) {
-        console.log("Password changed successfully");
         setSuccessMessage("Password changed successfully");
         setTimeout(() => {
           setSuccessMessage("");
@@ -190,6 +198,7 @@ export default function DashboardProfile() {
     }
   };
 
+  // Effect to reset password inputs and error message when change password mode is toggled
   useEffect(() => {
     if (!changePasswordMode) {
       setNewPassword("");
@@ -198,10 +207,12 @@ export default function DashboardProfile() {
     }
   }, [changePasswordMode]);
 
+  // Function for toggling change password mode
   const toggleChangePasswordMode = () => {
     setChangePasswordMode((prevMode) => !prevMode);
   };
 
+  // Function to enter edit mode
   const enterEditMode = () => {
     setEditMode(true);
     setChangePasswordMode(false);

@@ -15,6 +15,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function Dashboard() {
+  // State variables
   const [isLoggedIn, setIsLoggedIn] = useState();
   const [modal, setModal] = useState(false);
   const [cardModal, setCardModal] = useState(false);
@@ -24,6 +25,7 @@ export default function Dashboard() {
   const [currentCard, setCurrentCard] = useState("");
   const navigate = useNavigate();
 
+  // Effect to check login status when component mounts
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -42,6 +44,7 @@ export default function Dashboard() {
       }
     };
 
+    // Function to fetch admin requests if user is an admin
     const fetchAdminRequests = async () => {
       try {
         const response = await axios.get(
@@ -59,21 +62,25 @@ export default function Dashboard() {
     checkLoginStatus();
   }, []);
 
+  // Effect to navigate to login page if user is not logged in
   useEffect(() => {
     if (isLoggedIn === false) {
       navigate("/login");
     }
   }, [isLoggedIn, navigate]);
 
+  // Function to toggle the modal visibility
   const toggleModal = () => {
     setModal(!modal);
   };
 
+  // Function to toggle the card modal visibility and set current card
   const toggleCardModal = (cardTitle) => {
     setCurrentCard(cardTitle);
     setCardModal(!cardModal);
   };
 
+  // Effect to add or remove active-modal class to body based on modal states
   useEffect(() => {
     if (modal || cardModal) {
       document.body.classList.add("active-modal");
@@ -82,18 +89,19 @@ export default function Dashboard() {
     }
   }, [modal, cardModal]);
 
+  // Function to handle user logout
   const handleLogout = async () => {
     try {
       await axios.get("http://localhost:3002/logout", {
         withCredentials: true,
       });
       setIsLoggedIn(false);
-      console.log("User logged out successfully");
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
 
+  // Function to update admin status of a user
   const updateAdminStatus = async (email, status) => {
     try {
       await axios.post(
@@ -109,12 +117,12 @@ export default function Dashboard() {
       setAdminRequests(
         adminRequests.filter((request) => request.email !== email)
       );
-      console.log(`Status updated to ${status} for ${email}`);
     } catch (error) {
       console.error("Error updating admin status:", error);
     }
   };
 
+  // Card contents for different dashboard sections
   const cardContents = {
     Invest: (
       <div>
@@ -173,7 +181,7 @@ export default function Dashboard() {
           </li>
           <li>
             <strong>View Saved Assets:</strong> View and manage assets you've
-            saved to your watchlist after inputing the start date, end date and
+            saved to your watchlist after inputting the start date, end date and
             the interval.
           </li>
           <li>

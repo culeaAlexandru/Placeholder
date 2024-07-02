@@ -6,6 +6,7 @@ import "../Home-page-loggedIn.css";
 import portrait from "../imgs/default-pp.jpg";
 
 export default function Homepage() {
+  // State variables
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState("");
@@ -27,10 +28,8 @@ export default function Homepage() {
   useEffect(() => {
     const isUserLoggedIn = localStorage.getItem("isLoggedIn");
 
-    console.log(isUserLoggedIn);
     if (isUserLoggedIn === "true") {
       setIsLoggedIn(true);
-      console.log("User is logged in");
     }
   }, []);
 
@@ -38,14 +37,9 @@ export default function Homepage() {
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     setIsLoggedIn(false);
-    axios
-      .get("http://localhost:3002/logout")
-      .then(() => {
-        console.log("User logged out successfully");
-      })
-      .catch((error) => {
-        console.error("Error logging out:", error);
-      });
+    axios.get("http://localhost:3002/logout").catch((error) => {
+      console.error("Error logging out:", error);
+    });
   };
 
   // Ref for dropdown menu
@@ -119,7 +113,7 @@ export default function Homepage() {
             </div>
           </div>
         ) : (
-          // Home Header
+          // Home Header for users not logged in
           <div className="nav-menu-no-log">
             <li className="login-in-link" style={{ display: "inline-block" }}>
               <Link to="/login" className="custom-link">

@@ -23,6 +23,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DashboardInvest() {
+  // State variables
   const [isLoggedIn, setIsLoggedIn] = useState();
   const [modal, setModal] = useState(false);
   const [username, setUsername] = useState("");
@@ -98,45 +99,46 @@ export default function DashboardInvest() {
 
   const apiKey = "N3JAUKTbfxv2bro3C9VzFQARVY7n2Vn5";
 
-  // Check user's login status
+  // Effect to check login status when component mounts
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
         const response = await axios.get("http://localhost:3002", {
-          withCredentials: true, // Sending cookies with the request
+          withCredentials: true,
         });
-        const { valid, username } = response.data; // Destructuring response data
-        setIsLoggedIn(valid); // Setting login status
-        setUsername(username); // Setting username
+        const { valid, username } = response.data;
+        setIsLoggedIn(valid);
+        setUsername(username);
       } catch (error) {
-        console.error("Error checking login status:", error); // Handling error
+        console.error("Error checking login status:", error);
       }
     };
 
-    checkLoginStatus(); // Calling function to check login status
+    checkLoginStatus();
   }, []);
 
-  // Redirect if not logged in
+  // Effect to navigate to login page if user is not logged in
   useEffect(() => {
     if (isLoggedIn === false) {
       navigate("/login"); // Redirecting to login page
     }
   }, [isLoggedIn, navigate]);
 
-  // Function to toggle the Log out modal visibility
+  // Function to toggle the modal visibility
   const toggleModal = () => {
     setModal(!modal); // Toggling modal state
   };
 
-  // Add/remove class for modal
+  // Function to toggle the card modal visibility and set current card
   useEffect(() => {
     if (modal) {
-      document.body.classList.add("active-modal"); // Adding class to body for active modal
+      document.body.classList.add("active-modal");
     } else {
-      document.body.classList.remove("active-modal"); // Removing class from body
+      document.body.classList.remove("active-modal");
     }
   }, [modal]);
 
+  // Event listener to handle clicks outside the search bars
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -183,6 +185,7 @@ export default function DashboardInvest() {
     };
   }, [searchBarRefA, searchBarRefB, searchBarRefC, searchBarRefD]);
 
+  // Debounce function to limit the rate at which fetchSuggestions is called
   const debounce = (func, delay) => {
     let timeoutId;
     return (...args) => {
@@ -193,6 +196,7 @@ export default function DashboardInvest() {
     };
   };
 
+  // Function to fetch suggestions from the API and update search state
   const fetchSuggestions = (input, setSearchState) => {
     if (suggestionCache[input]) {
       setSearchState((prevState) => ({
@@ -271,7 +275,7 @@ export default function DashboardInvest() {
       });
   };
 
-  // Handle input change for asset A
+  // Handle function for input change on asset A
   const handleInputChangeA = (e) => {
     const input = e.target.value.trim();
     setSearchStateA((prevState) => ({
@@ -290,7 +294,7 @@ export default function DashboardInvest() {
     debounce(() => fetchSuggestions(input, setSearchStateA), 50)();
   };
 
-  // Handle input change for asset B
+  // H Handle function for input change on asset B
   const handleInputChangeB = (e) => {
     const input = e.target.value.trim();
     setSearchStateB((prevState) => ({
@@ -309,6 +313,7 @@ export default function DashboardInvest() {
     debounce(() => fetchSuggestions(input, setSearchStateB), 50)();
   };
 
+  //  Handle function for input change on asset C
   const handleInputChangeC = (e) => {
     const input = e.target.value.trim();
     setSearchStateC((prevState) => ({
@@ -327,6 +332,7 @@ export default function DashboardInvest() {
     debounce(() => fetchSuggestions(input, setSearchStateC), 50)();
   };
 
+  //  Handle function for input change on asset D
   const handleInputChangeD = (e) => {
     const input = e.target.value.trim();
     setSearchStateD((prevState) => ({
@@ -348,52 +354,52 @@ export default function DashboardInvest() {
   // Function to handle click on a suggestion for asset A
   const handleSuggestionClickA = (name, symbol) => {
     setSearchResultA([{ name, symbol }]);
-    // setLastValidSearchResultA([{ name, symbol }]);
     setSearchStateA({
       ...searchStateA,
       companyName: "",
-      suggestions: [], // Clear suggestions
+      suggestions: [],
     });
-    setShowInputA(false); // Hiding input field
-    setAssetSymbolA(symbol ? symbol : ""); // Setting asset symbol
+    setShowInputA(false);
+    setAssetSymbolA(symbol ? symbol : "");
   };
 
   // Function to handle click on a suggestion for asset B
   const handleSuggestionClickB = (name, symbol) => {
     setSearchResultB([{ name, symbol }]);
-    // setLastValidSearchResultB([{ name, symbol }]);
     setSearchStateB({
       ...searchStateB,
       companyName: "",
-      suggestions: [], // Clear suggestions
+      suggestions: [],
     });
-    setShowInputB(false); // Hiding input field
-    setAssetSymbolB(symbol ? symbol : ""); // Setting asset symbol
+    setShowInputB(false);
+    setAssetSymbolB(symbol ? symbol : "");
   };
 
+  // Function to handle click on a suggestion for asset C
   const handleSuggestionClickC = (name, symbol) => {
     setSearchResultC([{ name, symbol }]);
-    // setLastValidSearchResultC([{ name, symbol }]);
     setSearchStateC({
       ...searchStateC,
       companyName: "",
-      suggestions: [], // Clear suggestions
+      suggestions: [],
     });
-    setShowInputC(false); // Hiding input field
-    setAssetSymbolC(symbol ? symbol : ""); // Setting asset symbol
+    setShowInputC(false);
+    setAssetSymbolC(symbol ? symbol : "");
   };
+
+  // Function to handle click on a suggestion for asset D
   const handleSuggestionClickD = (name, symbol) => {
     setSearchResultD([{ name, symbol }]);
-    // setLastValidSearchResultD([{ name, symbol }]);
     setSearchStateD({
       ...searchStateD,
       companyName: "",
-      suggestions: [], // Clear suggestions
+      suggestions: [],
     });
-    setShowInputD(false); // Hiding input field
-    setAssetSymbolD(symbol ? symbol : ""); // Setting asset symbol
+    setShowInputD(false);
+    setAssetSymbolD(symbol ? symbol : "");
   };
 
+  // Function to handle input focus for asset A
   const handleInputFocusA = () => {
     if (searchStateA.companyName.trim() !== "") {
       if (suggestionCache[searchStateA.companyName.trim()]) {
@@ -407,6 +413,7 @@ export default function DashboardInvest() {
     }
   };
 
+  // Function to handle input focus for asset B
   const handleInputFocusB = () => {
     if (searchStateB.companyName.trim() !== "") {
       if (suggestionCache[searchStateB.companyName.trim()]) {
@@ -420,6 +427,7 @@ export default function DashboardInvest() {
     }
   };
 
+  // Function to handle input focus for asset C
   const handleInputFocusC = () => {
     if (searchStateC.companyName.trim() !== "") {
       if (suggestionCache[searchStateC.companyName.trim()]) {
@@ -433,6 +441,7 @@ export default function DashboardInvest() {
     }
   };
 
+  // Function to handle input focus for asset D
   const handleInputFocusD = () => {
     if (searchStateD.companyName.trim() !== "") {
       if (suggestionCache[searchStateD.companyName.trim()]) {
@@ -446,9 +455,9 @@ export default function DashboardInvest() {
     }
   };
 
+  // Function to calculate returns from closing prices
   const calculateReturns = (data) => {
     if (data.length < 2) return [];
-    console.log("Input data for calculateReturns: ", data); // Log input data
 
     const returns = data.slice(1).map((currentClose, index) => {
       const previousClose = data[index];
@@ -458,10 +467,10 @@ export default function DashboardInvest() {
       return percentageChange;
     });
 
-    console.log("Calculated returns (before filtering undefined): ", returns); // Log calculated returns
     return returns.filter((r) => r !== undefined);
   };
 
+  // Function to calculate covariance between two sets of returns
   const calculateCovariance = (x, y) => {
     const n = x.length;
     const meanX = x.reduce((acc, curr) => acc + curr, 0) / n;
@@ -475,6 +484,7 @@ export default function DashboardInvest() {
     );
   };
 
+  // Function to calculate standard deviation of returns
   const calculateStandardDeviation = (data) => {
     const n = data.length;
     const mean = data.reduce((acc, curr) => acc + curr, 0) / n;
@@ -486,11 +496,13 @@ export default function DashboardInvest() {
     );
   };
 
+  // Function to calculate mean return of a set of returns
   const calculateMeanReturn = (returns) => {
     const sum = returns.reduce((acc, curr) => acc + curr, 0);
     return sum / returns.length;
   };
 
+  // Function to calculate volatility of returns
   const calculateVolatility = (returns, meanReturn) => {
     const variance =
       returns.reduce((acc, curr) => acc + Math.pow(curr - meanReturn, 2), 0) /
@@ -498,6 +510,7 @@ export default function DashboardInvest() {
     return Math.sqrt(variance);
   };
 
+  // Function to calculate correlation matrix for multiple sets of returns
   const calculateCorrelationMatrix = useCallback((allData) => {
     if (allData.length === 0) return [];
     // Assuming allData is an array of arrays of returns
@@ -521,6 +534,7 @@ export default function DashboardInvest() {
     return matrix;
   }, []);
 
+  // Format date to YYYY-MM-DD
   const formatDate = (date) => {
     if (!date) return null;
     const year = date.getFullYear();
@@ -529,11 +543,12 @@ export default function DashboardInvest() {
     return `${year}-${month}-${day}`;
   };
 
+  // Effect to fetch and process data for selected assets
   useEffect(() => {
     const fetchAndProcessData = async () => {
       if (!shouldRecalculate) return;
 
-      setIsLoading(true); // Start loading
+      setIsLoading(true);
 
       const symbols = [
         assetSymbolA,
@@ -549,7 +564,7 @@ export default function DashboardInvest() {
       ];
 
       if (symbols.length < 2) {
-        setIsLoading(false); // Stop loading if not enough symbols
+        setIsLoading(false);
         return;
       }
 
@@ -558,24 +573,17 @@ export default function DashboardInvest() {
       const formattedStartDate = formatDate(startDate);
       const formattedEndDate = formatDate(endDate);
 
-      console.log("Fetching data for symbols:", symbols);
-
       const dataPromises = symbols.map((symbol, index) => {
         if (!symbol) {
           setters[index]([]);
           return Promise.resolve([]);
         }
 
-        console.log(`API triggered for symbol: ${symbol}`);
-
         const url = `https://financialmodelingprep.com/api/v3/historical-chart/${fetchInterval}/${symbol}?from=${formattedStartDate}&to=${formattedEndDate}&apikey=${apiKey}`;
-        console.log(url);
 
         return fetch(url)
           .then((response) => response.json())
           .then((data) => {
-            console.log(`Fetched data for ${symbol}:`, data);
-
             if (interval === "Daily") {
               const groupedByDate = data.reduce((acc, cur) => {
                 const date = new Date(cur.date).toISOString().split("T")[0];
@@ -589,24 +597,15 @@ export default function DashboardInvest() {
                   values.reduce((a, b) => a + b, 0) / values.length;
                 return { date, close: average };
               });
-
-              console.log(
-                `Processed data for ${symbol} (Daily interval):`,
-                data
-              );
             }
 
             const closes = data.map((entry) => entry.close);
-            console.log(`Closing prices for ${symbol}:`, closes);
 
             const returns = calculateReturns(closes);
-            console.log(`Calculated returns for ${symbol}:`, returns);
 
             const validReturns = returns.filter(
               (r) => r !== null && r !== undefined
             );
-
-            console.log(`Valid returns for ${symbol}:`, validReturns);
 
             setters[index](validReturns);
             setHistoricalDates(data.map((entry) => entry.date));
@@ -622,18 +621,13 @@ export default function DashboardInvest() {
 
       const allData = await Promise.all(dataPromises);
 
-      console.log("All data after processing:", allData);
-
       const meanReturns = allData.map((r) => calculateMeanReturn(r));
-      console.log("Mean returns:", meanReturns);
 
       const volatilities = allData.map((r, index) =>
         calculateVolatility(r, meanReturns[index])
       );
-      console.log("Volatilities:", volatilities);
 
       const correlationMatrix = calculateCorrelationMatrix(allData);
-      console.log("Correlation matrix:", correlationMatrix);
 
       setAssetsReturn(meanReturns);
       setAssetsVol(volatilities);
@@ -643,7 +637,7 @@ export default function DashboardInvest() {
       sessionStorage.setItem("meanReturns", JSON.stringify(meanReturns));
 
       setShouldRecalculate(false);
-      setIsLoading(false); // Stop loading after data is fetched and processed
+      setIsLoading(false);
     };
 
     if (startDate && endDate && interval !== "Interval") {
@@ -659,22 +653,10 @@ export default function DashboardInvest() {
     interval,
     apiKey,
     calculateCorrelationMatrix,
-    shouldRecalculate, // Added dependency
+    shouldRecalculate,
   ]);
 
-  // Function to handle user logout
-  const handleLogout = async () => {
-    try {
-      await axios.get("http://localhost:3002/logout", {
-        withCredentials: true,
-      });
-      localStorage.removeItem("isLoggedIn");
-      setIsLoggedIn(false);
-      console.log("User logged out successfully");
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
-  };
+  // Update line chart data when asset data is fetched
   useEffect(() => {
     if (!dataFetched) return;
 
@@ -721,6 +703,7 @@ export default function DashboardInvest() {
     dataFetched,
   ]);
 
+  // Options for line chart
   const options = {
     plugins: {
       legend: {
@@ -752,8 +735,8 @@ export default function DashboardInvest() {
     },
   };
 
+  // Function to handle clear button click
   const handleClearButtonClick = () => {
-    // Reset relevant states for cases 0, 1, 2, 3, and 4
     setSearchStateA({
       companyName: "",
       hasSearched: false,
@@ -807,6 +790,7 @@ export default function DashboardInvest() {
     setShouldRecalculate(false);
   };
 
+  // Function to handle delete button click for an asset
   const handleDeleteButtonClick = (index) => {
     const updatedSymbols = [
       assetSymbolA,
@@ -847,7 +831,6 @@ export default function DashboardInvest() {
       updatedSymbols[index] = "";
 
       setClickedInfos((prevInfos) => prevInfos.filter((_, i) => i !== index));
-      // Set shouldRecalculate to true after clearing asset data
       setShouldRecalculate(true);
     } else if (index >= 2 && index < updatedSymbols.length) {
       setters[index](null);
@@ -896,7 +879,6 @@ export default function DashboardInvest() {
             setRiskFreeRate(firstRate);
 
             // Log the response data and the first rate for debugging
-            console.log(data, firstRate);
           } else {
             // Log an error if the API response format is unexpected
             console.error("Unexpected API response format:", data);
@@ -912,6 +894,7 @@ export default function DashboardInvest() {
     }
   }, []);
 
+  // Function to calculate portfolio metrics (return, volatility, Sharpe ratio)
   const calculatePortfolioMetrics = useCallback(
     (weights) => {
       const portfolioReturn = weights.reduce(
@@ -944,6 +927,7 @@ export default function DashboardInvest() {
     [assetsReturn, assetsVol, assetsCorrelationMatrix, riskFreeRate]
   );
 
+  // Function to optimize portfolio weights to achieve target return
   const optimizePortfolio = useCallback(
     (initialWeights, targetReturn) => {
       const tolerance = 0.000001;
@@ -1020,7 +1004,6 @@ export default function DashboardInvest() {
         }
 
         iteration++;
-        // Decay learning rate
         learningRate *= 0.99;
       }
 
@@ -1039,6 +1022,7 @@ export default function DashboardInvest() {
     ]
   );
 
+  // Function to find the efficient frontier for portfolio optimization
   const findEfficientFrontier = useCallback(() => {
     const validAssetsReturn = assetsReturn.filter(
       (assetReturn) => assetReturn !== null && assetReturn !== undefined
@@ -1072,6 +1056,7 @@ export default function DashboardInvest() {
     return { portfolios, volatilities };
   }, [assetsReturn, optimizePortfolio]);
 
+  // Function to generate random portfolios for Monte Carlo simulation
   const generateRandomPortfolios = useCallback(() => {
     const numPortfolios = 500;
     const portfolios = [];
@@ -1096,6 +1081,7 @@ export default function DashboardInvest() {
     return portfolios;
   }, [assetsReturn, calculatePortfolioMetrics]);
 
+  // Function to generate Monte Carlo portfolios and efficient frontier data
   useEffect(() => {
     if (!dataFetched) return;
 
@@ -1110,12 +1096,14 @@ export default function DashboardInvest() {
     dataFetched,
   ]);
 
+  // Function to calculate the best outcome return at a given percentile
   const calculateBestOutcome = useCallback((percentile, returns) => {
     const sortedReturns = returns.sort((a, b) => a - b);
     const index = Math.ceil(percentile * sortedReturns.length) - 1;
     return sortedReturns[index];
   }, []);
 
+  // Effect to update Monte Carlo chart with new data
   useEffect(() => {
     const isEfficientFrontierArray = Array.isArray(
       efficientFrontierData.portfolios
@@ -1201,7 +1189,6 @@ export default function DashboardInvest() {
               beginAtZero: false,
             },
           },
-          // Add this part inside your Chart configuration, where onClick is defined.
           onClick: async (event, elements) => {
             if (elements.length > 0) {
               const element = elements[0];
@@ -1222,7 +1209,6 @@ export default function DashboardInvest() {
                   meanReturns
                 );
 
-                // Ensure that weights are defined and process them
                 const portfolioComponents = clickedPortfolio.weights
                   ? clickedPortfolio.weights
                       .map((weight, index) => {
@@ -1245,9 +1231,6 @@ export default function DashboardInvest() {
                   bestOutcomeReturn: bestOutcomeReturn.toFixed(2),
                   portfolioComponents,
                 };
-
-                console.log("Clicked Portfolio Data:", cardInfo);
-                console.log("Best Outcome after clicking:", bestOutcomeReturn);
 
                 setClickedInfos((prevInfos) => [...prevInfos, cardInfo]);
               }
@@ -1275,11 +1258,9 @@ export default function DashboardInvest() {
     step,
   ]);
 
+  // Function to handle save portfolio button click
   const handleSavePortfolio = async (portfolio) => {
-    console.log("Portfolio being saved:", portfolio);
-
     const currentDate = new Date().toISOString();
-
     const formattedStartDate = formatDate(startDate);
     const formattedEndDate = formatDate(endDate);
 
@@ -1311,25 +1292,17 @@ export default function DashboardInvest() {
         .split(": ")[1]
         .trim();
     }
-
-    console.log("Data being sent to backend:", data);
-
     try {
-      const response = await axios.post(
-        "http://localhost:3002/save-data-portfolio",
-        {
-          username: username,
-          savedData: data,
-        }
-      );
-      if (response.status === 200) {
-        console.log("Data saved successfully");
-      }
+      await axios.post("http://localhost:3002/save-data-portfolio", {
+        username: username,
+        savedData: data,
+      });
     } catch (error) {
       console.error("Error saving portfolio data:", error.message);
     }
   };
 
+  // Function to update line chart data
   const updateLineChartData = useCallback(() => {
     const validSymbols = [
       assetSymbolA,
@@ -1390,6 +1363,7 @@ export default function DashboardInvest() {
     updateLineChartData,
   ]);
 
+  // Function to handle next step sequence
   const handleNextStep = () => {
     if (step === 3) {
       updateLineChartData();
@@ -1397,6 +1371,7 @@ export default function DashboardInvest() {
     setStep((prevStep) => prevStep + 1);
   };
 
+  // Function to handle previous step sequence
   const handlePreviousStep = () => {
     setStep((prevStep) => {
       if (prevStep === 5) {
@@ -1409,6 +1384,7 @@ export default function DashboardInvest() {
     }
   };
 
+  // Function to handle functionality of adding a search bar
   const handleAddSearchBar = () => {
     const searchBarsCount = [
       showInputA,
@@ -1433,6 +1409,7 @@ export default function DashboardInvest() {
     }
   };
 
+  // Function to handle functionality of deleting a search bar
   const handleRemoveSearchBar = () => {
     const searchBarsCount = [
       showInputA,
@@ -1471,6 +1448,7 @@ export default function DashboardInvest() {
     }
   };
 
+  // Function to render the controls for adding/removing search bars
   const renderSearchBarControls = () => {
     const searchBarsCount = [
       showInputA,
@@ -1502,6 +1480,7 @@ export default function DashboardInvest() {
     );
   };
 
+  // Function to handle start date change
   const handleStartDateChange = (date) => {
     setStartDate(date);
     if (endDate && interval !== "Interval") {
@@ -1509,6 +1488,7 @@ export default function DashboardInvest() {
     }
   };
 
+  // Function to handle end date change
   const handleEndDateChange = (date) => {
     setEndDate(date);
     if (startDate && interval !== "Interval") {
@@ -1516,6 +1496,7 @@ export default function DashboardInvest() {
     }
   };
 
+  // Function to handle interval change
   const handleIntervalChange = (e) => {
     setIntervals(e.target.value);
     if (startDate && endDate) {
@@ -1523,6 +1504,20 @@ export default function DashboardInvest() {
     }
   };
 
+  // Function to handle user logout
+  const handleLogout = async () => {
+    try {
+      await axios.get("http://localhost:3002/logout", {
+        withCredentials: true,
+      });
+      localStorage.removeItem("isLoggedIn");
+      setIsLoggedIn(false);
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
+  // Render step content based on the current step
   const renderStepContent = () => {
     switch (step) {
       case 0:
@@ -1590,9 +1585,9 @@ export default function DashboardInvest() {
                             <button
                               className="delete-button"
                               onClick={() => {
-                                setShowInputA(true); // Show input field
+                                setShowInputA(true);
                                 setSearchResultA(null);
-                                handleDeleteButtonClick(0); // Call recalculation with index 0
+                                handleDeleteButtonClick(0);
                               }}
                             >
                               X
@@ -1655,9 +1650,9 @@ export default function DashboardInvest() {
                             <button
                               className="delete-button"
                               onClick={() => {
-                                setShowInputB(true); // Show input field
+                                setShowInputB(true);
                                 setSearchResultB(null);
-                                handleDeleteButtonClick(1); // Call recalculation with index 1
+                                handleDeleteButtonClick(1);
                               }}
                             >
                               X
@@ -1721,9 +1716,9 @@ export default function DashboardInvest() {
                             <button
                               className="delete-button"
                               onClick={() => {
-                                setShowInputC(true); // Show input field
+                                setShowInputC(true);
                                 setSearchResultC(null);
-                                handleDeleteButtonClick(2); // Call recalculation with index 2
+                                handleDeleteButtonClick(2);
                               }}
                             >
                               X
@@ -1786,9 +1781,9 @@ export default function DashboardInvest() {
                             <button
                               className="delete-button"
                               onClick={() => {
-                                setShowInputD(true); // Show input field
+                                setShowInputD(true);
                                 setSearchResultD(null);
-                                handleDeleteButtonClick(3); // Call recalculation with index 3
+                                handleDeleteButtonClick(3);
                               }}
                             >
                               X
@@ -1837,7 +1832,7 @@ export default function DashboardInvest() {
               <div className="date-picker-wrapper">
                 <DatePicker
                   selected={startDate}
-                  onChange={handleStartDateChange} // Updated
+                  onChange={handleStartDateChange}
                   placeholderText="Select start date"
                   maxDate={yesterday}
                   className="date-picker-input"
@@ -1891,7 +1886,7 @@ export default function DashboardInvest() {
               <div className="date-picker-wrapper">
                 <DatePicker
                   selected={endDate}
-                  onChange={handleEndDateChange} // Updated
+                  onChange={handleEndDateChange}
                   placeholderText="Select end date"
                   maxDate={new Date()}
                   className="date-picker-input"
@@ -1942,7 +1937,7 @@ export default function DashboardInvest() {
               <div className="select-wrapper">
                 <select
                   value={interval}
-                  onChange={handleIntervalChange} // Updated
+                  onChange={handleIntervalChange}
                   className="interval-select"
                 >
                   <option hidden>Interval</option>
@@ -1995,7 +1990,6 @@ export default function DashboardInvest() {
             </div>
           </div>
         );
-
       case 4:
         return (
           <div className="main-content-summary">

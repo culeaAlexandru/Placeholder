@@ -17,6 +17,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DashboardPortfolios() {
+  // State variables
   const [isLoggedIn, setIsLoggedIn] = useState();
   const [modal, setModal] = useState(false);
   const [username, setUsername] = useState("");
@@ -27,6 +28,7 @@ export default function DashboardPortfolios() {
   const navigate = useNavigate();
   const apiKey = "6DinljGuXqTXCJvUfRnUQUhpuERJy68U";
 
+  // Effect to check login status on component mount
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -44,12 +46,14 @@ export default function DashboardPortfolios() {
     checkLoginStatus();
   }, []);
 
+  // Effect to redirect to login page if not logged in
   useEffect(() => {
     if (isLoggedIn === false) {
       navigate("/login");
     }
   }, [isLoggedIn, navigate]);
 
+  // Effect to fetch portfolio data when username changes
   useEffect(() => {
     if (username.length > 0) {
       const fetchPortfolioData = async () => {
@@ -118,6 +122,7 @@ export default function DashboardPortfolios() {
     }
   }, [username]);
 
+  // Effect to fetch risk-free rate
   useEffect(() => {
     const fetchRiskFreeRate = async () => {
       const cachedRate = sessionStorage.getItem("riskFreeRate");
@@ -145,6 +150,7 @@ export default function DashboardPortfolios() {
     fetchRiskFreeRate();
   }, []);
 
+  // Utility functions for calculating financial metrics
   const calculateReturns = (data) => {
     if (!data || data.length < 2) return [];
     const returns = data.slice(1).map((currentClose, index) => {
@@ -206,17 +212,28 @@ export default function DashboardPortfolios() {
   }, []);
 
   const calculatePortfolioMetrics = useCallback(
-    (weights, assetsReturn, portfolioRisk, assetsCorrelationMatrix) => {
-      console.log("Risk-free rate:", riskFreeRate);
+    (weights, assetsReturn, assetsVol, assetsCorrelationMatrix) => {
       const portfolioReturn = weights.reduce(
         (acc, weight, index) => acc + weight * assetsReturn[index],
         0
       );
 
-      const portfolioVolatility = portfolioRisk;
+      let portfolioVolatility = 0;
+      for (let i = 0; i < weights.length; i++) {
+        for (let j = 0; j < weights.length; j++) {
+          portfolioVolatility +=
+            weights[i] *
+            weights[j] *
+            assetsVol[i] *
+            assetsVol[j] *
+            assetsCorrelationMatrix[i][j];
+        }
+      }
+      portfolioVolatility = Math.sqrt(portfolioVolatility);
 
       const sharpeRatio =
         (portfolioReturn - riskFreeRate) / portfolioVolatility;
+
       return {
         return: portfolioReturn,
         volatility: portfolioVolatility,
@@ -226,6 +243,7 @@ export default function DashboardPortfolios() {
     [riskFreeRate]
   );
 
+  // Function to fetch historical data from the API
   const fetchHistoricalData = async (symbol, interval, startDate, endDate) => {
     let apiInterval = interval;
     if (interval === "Daily") {
@@ -235,7 +253,6 @@ export default function DashboardPortfolios() {
     const formattedStartDate = new Date(startDate).toISOString().split("T")[0];
     const formattedEndDate = new Date(endDate).toISOString().split("T")[0];
     const url = `https://financialmodelingprep.com/api/v3/historical-chart/${apiInterval}/${symbol}?from=${formattedStartDate}&to=${formattedEndDate}&apikey=${apiKey}`;
-    console.log(url);
 
     try {
       const response = await fetch(url);
@@ -283,12 +300,14 @@ export default function DashboardPortfolios() {
     }
   };
 
+  // Function to calculate best outcome based on percentile
   const calculateBestOutcome = useCallback((percentile, returns) => {
     const sortedReturns = [...returns].sort((a, b) => a - b);
     const index = Math.ceil(percentile * sortedReturns.length) - 1;
     return sortedReturns[index];
   }, []);
 
+  // Function to calculate date difference in days
   const calculateDateDifference = (startDate, endDate) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -296,12 +315,14 @@ export default function DashboardPortfolios() {
     return Math.ceil(difference / (1000 * 60 * 60 * 24));
   };
 
+  // Function to calculate new start date based on difference
   const calculateNewStartDate = (endDate, difference) => {
     const end = new Date(endDate);
     const newStart = new Date(end.setDate(end.getDate() - difference));
     return newStart.toISOString().split("T")[0];
   };
 
+  // Function to handle check button click
   const handleCheckButton = async (index) => {
     try {
       const portfolio = portfolioData[index];
@@ -353,13 +374,14 @@ export default function DashboardPortfolios() {
         return meanReturn;
       });
 
+      const volatilities = returns.map((r) => calculateStandardDeviation(r));
+
       const correlationMatrix = calculateCorrelationMatrix(returns);
 
-      const portfolioRisk = parseFloat(portfolio.risk);
       const metrics = calculatePortfolioMetrics(
         weights,
         meanReturns,
-        portfolioRisk,
+        volatilities,
         correlationMatrix
       );
 
@@ -381,6 +403,7 @@ export default function DashboardPortfolios() {
     }
   };
 
+  // Function to handle update button click
   const handleUpdateButton = async (index) => {
     try {
       const portfolio = portfolioData[index];
@@ -432,13 +455,14 @@ export default function DashboardPortfolios() {
         return meanReturn;
       });
 
+      const volatilities = returns.map((r) => calculateStandardDeviation(r));
+
       const correlationMatrix = calculateCorrelationMatrix(returns);
 
-      const portfolioRisk = parseFloat(portfolio.risk);
       const metrics = calculatePortfolioMetrics(
         weights,
         meanReturns,
-        portfolioRisk,
+        volatilities,
         correlationMatrix
       );
 
@@ -459,10 +483,11 @@ export default function DashboardPortfolios() {
 
       setDifferences(updatedDifferences);
     } catch (error) {
-      console.error("Error in handleCheckButton: ", error);
+      console.error("Error in handleUpdateButton: ", error);
     }
   };
 
+  // Function to handle delete button click
   const handleDeleteButton = async (index) => {
     try {
       await axios.post("http://localhost:3002/delete-portfolio", {
@@ -475,17 +500,17 @@ export default function DashboardPortfolios() {
 
       setPortfolioData(updatedPortfolios);
       setDifferences(updatedDifferences);
-
-      console.log(`Portfolio at index ${index} deleted successfully`);
     } catch (error) {
       console.error("Error in handleDeleteButton: ", error);
     }
   };
 
+  // Function to toggle the modal visibility
   const toggleModal = () => {
     setModal(!modal);
   };
 
+  // Effect to add or remove active-modal class to body based on modal states
   useEffect(() => {
     if (modal) {
       document.body.classList.add("active-modal");
@@ -494,6 +519,7 @@ export default function DashboardPortfolios() {
     }
   }, [modal]);
 
+  // Function to handle user logout
   const handleLogout = async () => {
     try {
       await axios.get("http://localhost:3002/logout", {
@@ -501,12 +527,12 @@ export default function DashboardPortfolios() {
       });
       localStorage.removeItem("isLoggedIn");
       setIsLoggedIn(false);
-      console.log("User logged out successfully");
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
 
+  // Function to generate PDF for portfolio data
   const generatePdf = async (index) => {
     if (
       portfolioData.length === 0 ||
@@ -523,7 +549,7 @@ export default function DashboardPortfolios() {
     const addTitle = (title, startY) => {
       pdf.setFontSize(16);
       pdf.text(title, 15, startY);
-      return startY + 10; // Return the next Y coordinate
+      return startY + 10;
     };
 
     const addTable = (title, data, startY) => {
@@ -534,13 +560,13 @@ export default function DashboardPortfolios() {
         startY: startY,
       });
 
-      return pdf.previousAutoTable.finalY; // Return the last Y coordinate of the table
+      return pdf.previousAutoTable.finalY;
     };
 
     const addChart = async (label, data, color, startY) => {
       const canvas = document.createElement("canvas");
-      canvas.width = 800; // Increased canvas width for better resolution
-      canvas.height = 400; // Increased canvas height for better resolution
+      canvas.width = 800;
+      canvas.height = 400;
       const ctx = canvas.getContext("2d");
 
       new Chart(ctx, {
@@ -566,7 +592,7 @@ export default function DashboardPortfolios() {
       const chartDataUrl = canvas.toDataURL("image/png");
       pdf.addImage(chartDataUrl, "PNG", 15, startY, 180, 100);
 
-      return startY + 110; // Return the next Y coordinate
+      return startY + 110;
     };
 
     const addHistoricalAndReturnsCharts = async (
@@ -590,7 +616,7 @@ export default function DashboardPortfolios() {
         pdf.addPage();
         nextY = 20;
       }
-      nextY += 10; // Add some space before the Returns title
+      nextY += 10;
       nextY = await addChart(
         `${labelPrefix} Returns`,
         { labels, values: returns },
@@ -598,7 +624,7 @@ export default function DashboardPortfolios() {
         nextY
       );
 
-      return nextY; // Return the last Y coordinate
+      return nextY;
     };
 
     const addCurrentDataCharts = async (
@@ -643,7 +669,7 @@ export default function DashboardPortfolios() {
         startY: startY,
       });
 
-      return pdf.previousAutoTable.finalY; // Return the last Y coordinate of the table
+      return pdf.previousAutoTable.finalY;
     };
 
     const addReturnsDataTable = (symbol, dates, returns, startY) => {
@@ -663,10 +689,9 @@ export default function DashboardPortfolios() {
         startY: startY,
       });
 
-      return pdf.previousAutoTable.finalY; // Return the last Y coordinate of the table
+      return pdf.previousAutoTable.finalY;
     };
 
-    // Add content to the PDF
     let startY = 20;
     startY = addTable(
       "Portfolio Data",
@@ -696,7 +721,7 @@ export default function DashboardPortfolios() {
       ],
       startY
     );
-    startY += 20; // Add some space between the table and the charts
+    startY += 20;
 
     for (let i = 0; i < portfolio.symbols.length; i++) {
       const symbol = portfolio.symbols[i];
@@ -710,11 +735,11 @@ export default function DashboardPortfolios() {
         pdf.addPage();
         startY = 20;
       }
-      startY += 10; // Add some space before the Returns title
+      startY += 10;
       startY = addReturnsDataTable(symbol, dates, returns, startY);
       if (startY > 200) {
         pdf.addPage();
-        startY = 20; // Reset Y coordinate on the new page
+        startY = 20;
       }
 
       startY = await addHistoricalAndReturnsCharts(
@@ -726,10 +751,9 @@ export default function DashboardPortfolios() {
 
       if (startY > 200) {
         pdf.addPage();
-        startY = 20; // Reset Y coordinate on the new page
+        startY = 20;
       }
 
-      // Add current data charts only for the corresponding asset
       startY = await addCurrentDataCharts(
         symbol,
         portfolio.interval,

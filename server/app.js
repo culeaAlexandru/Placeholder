@@ -16,17 +16,17 @@ app.use(
   cors({
     origin: ["http://localhost:3000"],
     methods: ["POST", "GET", "PUT"],
-    credentials: true, // Allow sending cookies
+    credentials: true,
   })
 );
 app.use(
   session({
-    secret: "secret", // Secret used to sign the session ID cookie
+    secret: "secret",
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: false,
-      maxAge: 1000 * 60 * 60 * 24 * 7, // Session duration: 7 days
+      maxAge: 1000 * 60 * 60 * 24 * 7,
     },
   })
 );
@@ -49,15 +49,15 @@ cloudinary.config({
   api_secret: "EUxMNrqgNg4IQkw1GJL8OPRkoOU",
 });
 
-// Configure Multer and Cloudinary Storage
+// Configuration for Multer and Cloudinary Storage
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     const username = req.body.UserName;
-    const extension = file.mimetype.split("/")[1]; // Get the file extension from mimetype
+    const extension = file.mimetype.split("/")[1];
     return {
       folder: `photos/${username}`,
-      format: extension, // Use the file's original format
+      format: extension,
       public_id: file.originalname.split(".")[0],
     };
   },
@@ -99,7 +99,7 @@ app.post("/register", upload.single("CIPhoto"), async (req, res) => {
   const setCIPhoto = req.file.path;
 
   try {
-    // Check if email or username already exists
+    // Function to check if email or username already exists
     const existingUser = await client
       .db("portfolio_login_db")
       .collection("users")
@@ -110,7 +110,7 @@ app.post("/register", upload.single("CIPhoto"), async (req, res) => {
     if (existingUser) {
       res.send({ message: "Email or username is already registered" });
     } else {
-      // Generate verification token and send verification email
+      // Function to generate verification token and send verification email
       const verificationToken = jwt.sign(
         { email: sentEmail },
         "your_verification_secret",
@@ -118,7 +118,7 @@ app.post("/register", upload.single("CIPhoto"), async (req, res) => {
       );
       sendVerificationEmail(sentEmail, verificationToken);
 
-      // Hash the password before saving
+      // Function to hash the password before saving
       const hash = await bcrypt.hash(sentPassword, saltRounds);
       const newUser = {
         email: sentEmail,
@@ -171,7 +171,7 @@ function sendVerificationEmail(email, token) {
     html: `<p>Click <a href="http://localhost:3000/verify/${token}">here</a> to verify your email address.</p>`,
   };
 
-  // Send the email
+  // Function to send the verification email
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.log("Error sending verification email:", error);
@@ -248,7 +248,7 @@ app.post("/admin/update-verify-status", async (req, res) => {
     }
 
     if (user.CIPhoto) {
-      const username = user.username; // Extract the username
+      const username = user.username;
       const folderPath = `photos/${username}`;
       await deleteFolder(folderPath);
     }
@@ -342,8 +342,8 @@ app.get("/", async (req, res) => {
         res.send({
           valid: true,
           username: user.username,
-          admin: user.admin, // Include admin status
-          CIPhoto: user.CIPhoto, // Include CI Photo URL
+          admin: user.admin,
+          CIPhoto: user.CIPhoto,
         });
       } else {
         res.send({ valid: false });
@@ -455,7 +455,7 @@ app.post("/save-data-portfolio", async (req, res) => {
       interval: savedData.interval,
     };
 
-    // Conditionally add asset3 and asset4 if they exist
+    // Function to conditionally add asset3 and asset4 if they exist
     if (savedData.asset3Name && savedData.asset3Percent) {
       data.asset3Name = savedData.asset3Name;
       data.asset3Percent = savedData.asset3Percent;
