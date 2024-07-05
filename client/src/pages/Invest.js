@@ -97,7 +97,7 @@ export default function DashboardInvest() {
   const [shouldRecalculate, setShouldRecalculate] = useState(false);
   const [suggestionCache, setSuggestionCache] = useState({});
 
-  const apiKey = "N3JAUKTbfxv2bro3C9VzFQARVY7n2Vn5";
+  const apiKey = "MKANgkL19Pd0E9bAVmtAcRbkSOuYheNy";
 
   // Effect to check login status when component mounts
   useEffect(() => {
@@ -830,15 +830,12 @@ export default function DashboardInvest() {
       dataSetters[index]([]);
       updatedSymbols[index] = "";
 
-      setClickedInfos((prevInfos) => prevInfos.filter((_, i) => i !== index));
       setShouldRecalculate(true);
     } else if (index >= 2 && index < updatedSymbols.length) {
       setters[index](null);
       symbolSetters[index]("");
       dataSetters[index]([]);
       updatedSymbols[index] = "";
-
-      setClickedInfos((prevInfos) => prevInfos.filter((_, i) => i !== index));
 
       // Hide the search bar for the deleted asset
       showInputSetters[index](false);
@@ -1517,6 +1514,10 @@ export default function DashboardInvest() {
     }
   };
 
+  const handleDeletePortfolioCard = (index) => {
+    setClickedInfos((prevInfos) => prevInfos.filter((_, i) => i !== index));
+  };
+
   // Render step content based on the current step
   const renderStepContent = () => {
     switch (step) {
@@ -2087,7 +2088,7 @@ export default function DashboardInvest() {
                     <div className="button-group">
                       <button
                         className="btn delete"
-                        onClick={() => handleDeleteButtonClick(index)}
+                        onClick={() => handleDeletePortfolioCard(index)}
                       >
                         Delete
                       </button>

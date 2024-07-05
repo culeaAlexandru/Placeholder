@@ -53,7 +53,7 @@ export default function DashboardPortfolios() {
     }
   }, [isLoggedIn, navigate]);
 
-  // Effect to fetch portfolio data when username changes
+  // Effect to fetch portfolio data
   useEffect(() => {
     if (username.length > 0) {
       const fetchPortfolioData = async () => {
